@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 0.5.7
+Stable tag: 0.6.0
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,12 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 0.6.0 =
+* Improved scan reliability across hosts
+* Scan scheduling falls back to WP-Cron when Action Scheduler is missing
+* Keeps locale consistent for background scan callbacks
+* Handles attachments served from a CDN (non-local upload URLs)
 
 = 0.5.7 =
 * Fixed: keep locale consistent for background scan jobs (WP-Cron / Action Scheduler), improving folder name consistency

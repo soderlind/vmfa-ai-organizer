@@ -63,6 +63,7 @@ class AIAnalysisServiceTest extends BrainMonkeyTestCase {
 		Functions\when( 'get_post_meta' )->justReturn( '' );
 		Functions\when( 'wp_get_attachment_metadata' )->justReturn( [] );
 		Functions\when( 'get_attached_file' )->justReturn( '/uploads/beach-sunset.jpg' );
+		Functions\when( 'wp_get_attachment_url' )->justReturn( 'https://example.com/wp-content/uploads/beach-sunset.jpg' );
 
 		$service  = new AIAnalysisService();
 		$metadata = $service->get_media_metadata( $attachment_id );
@@ -71,6 +72,33 @@ class AIAnalysisServiceTest extends BrainMonkeyTestCase {
 		$this->assertEquals( 'beach-sunset.jpg', $metadata[ 'filename' ] );
 		$this->assertArrayHasKey( 'mime_type', $metadata );
 		$this->assertEquals( 'image/jpeg', $metadata[ 'mime_type' ] );
+	}
+
+	/**
+	 * Test get_image_data falls back to remote URL when local file path is unavailable.
+	 */
+	public function test_get_image_data_falls_back_to_remote_url_when_no_local_file(): void {
+		$attachment_id = 123;
+		$post          = $this->create_mock_attachment( $attachment_id, 'beach.jpg' );
+
+		Functions\when( 'get_post' )->justReturn( $post );
+		Functions\when( 'get_attached_file' )->justReturn( '' );
+		Functions\when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/wp-content/uploads/beach.jpg' );
+		Functions\when( 'wp_get_attachment_url' )->justReturn( 'https://example.com/wp-content/uploads/beach.jpg' );
+		Functions\when( 'wp_parse_url' )->alias( static fn( $url ) => array( 'scheme' => 'https' ) );
+
+		Functions\when( 'wp_remote_get' )->justReturn( array( 'dummy' => true ) );
+		Functions\when( 'is_wp_error' )->alias( static fn( $value ) => false );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_header' )->alias( static fn( $response, $header ) => 'image/jpeg' );
+		Functions\when( 'wp_remote_retrieve_body' )->justReturn( 'abcde' );
+
+		$service   = new AIAnalysisService();
+		$imageData = $service->get_image_data( $attachment_id );
+
+		$this->assertNotNull( $imageData );
+		$this->assertSame( 'image/jpeg', $imageData['mime_type'] );
+		$this->assertSame( base64_encode( 'abcde' ), $imageData['base64'] );
 	}
 
 	/**
