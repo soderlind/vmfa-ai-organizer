@@ -95,6 +95,43 @@ final class Plugin {
 	}
 
 	/**
+	 * Ensure Action Scheduler is loaded.
+	 *
+	 * Depending on packaging, Action Scheduler may be present under vendor/ or woocommerce/.
+	 * This method is safe to call multiple times.
+	 *
+	 * @return bool True if Action Scheduler scheduling functions are available.
+	 */
+	public static function maybe_load_action_scheduler(): bool {
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			return true;
+		}
+
+		if ( ! defined( 'VMFA_AI_ORGANIZER_PATH' ) ) {
+			return false;
+		}
+
+		// If WordPress isn't loaded (e.g. some test contexts), don't try to boot Action Scheduler.
+		if ( ! function_exists( 'add_action' ) ) {
+			return false;
+		}
+
+		$paths = array(
+			VMFA_AI_ORGANIZER_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php',
+			VMFA_AI_ORGANIZER_PATH . 'woocommerce/action-scheduler/action-scheduler.php',
+		);
+
+		foreach ( $paths as $path ) {
+			if ( file_exists( $path ) ) {
+				require_once $path;
+				break;
+			}
+		}
+
+		return function_exists( 'as_schedule_single_action' );
+	}
+
+	/**
 	 * Load plugin text domain.
 	 *
 	 * @return void
