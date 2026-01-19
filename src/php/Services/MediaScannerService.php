@@ -29,7 +29,7 @@ class MediaScannerService {
 	 */
 	private function with_scan_locale( callable $callback ): mixed {
 		$progress = $this->get_progress();
-		$locale   = (string) ( $progress['locale'] ?? '' );
+		$locale   = (string) ( $progress[ 'locale' ] ?? '' );
 
 		if ( '' === $locale ) {
 			return $callback();
@@ -309,7 +309,7 @@ class MediaScannerService {
 			function (): void {
 				$progress = $this->get_progress();
 
-				if ( 'reorganize_all' !== $progress['mode'] ) {
+				if ( 'reorganize_all' !== $progress[ 'mode' ] ) {
 					return;
 				}
 
@@ -322,7 +322,7 @@ class MediaScannerService {
 				// Clear session-suggested folders for fresh start.
 				delete_option( 'vmfa_session_suggested_folders' );
 
-				if ( ! $this->schedule_first_batch( (bool) ( $progress['dry_run'] ?? false ), $this->get_batch_size() ) ) {
+				if ( ! $this->schedule_first_batch( (bool) ( $progress[ 'dry_run' ] ?? false ), $this->get_batch_size() ) ) {
 					$this->mark_scan_error( __( 'Unable to schedule first batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
 				}
 			}
@@ -339,24 +339,24 @@ class MediaScannerService {
 	 */
 	public function process_batch( int $batch_number, int $batch_size, bool $dry_run ): void {
 		$this->with_scan_locale(
-			function () use ( $batch_number, $batch_size, $dry_run ): void {
+			function () use ($batch_number, $batch_size, $dry_run): void {
 				$attachment_ids = get_option( 'vmfa_scan_attachment_ids', array() );
 				$progress       = $this->get_progress();
 
-				if ( empty( $attachment_ids ) || 'running' !== $progress['status'] ) {
+				if ( empty( $attachment_ids ) || 'running' !== $progress[ 'status' ] ) {
 					return;
 				}
 
 				// Safety check: if already processed all items, finalize.
 				$total = count( $attachment_ids );
-				if ( $progress['processed'] >= $total ) {
+				if ( $progress[ 'processed' ] >= $total ) {
 					$this->schedule_completion( $dry_run );
 					return;
 				}
 
 				// Get batch of IDs based on what's already processed, not batch number.
 				// This prevents issues with duplicate action scheduler runs.
-				$batch_ids = array_slice( $attachment_ids, $progress['processed'], $batch_size );
+				$batch_ids = array_slice( $attachment_ids, $progress[ 'processed' ], $batch_size );
 
 				if ( empty( $batch_ids ) ) {
 					// No more batches, finalize.
@@ -376,7 +376,7 @@ class MediaScannerService {
 				foreach ( $batch_ids as $attachment_id ) {
 					// Check for cancellation between each item.
 					$current_progress = $this->get_progress();
-					if ( 'running' !== $current_progress['status'] ) {
+					if ( 'running' !== $current_progress[ 'status' ] ) {
 						// Scan was cancelled, stop processing.
 						return;
 					}
@@ -395,12 +395,12 @@ class MediaScannerService {
 					$batch_results[] = $result;
 
 					// Store pending result for later application.
-					if ( ! $dry_run && in_array( $result['action'], array( 'assign', 'create' ), true ) ) {
+					if ( ! $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
 						$pending_results[] = $result;
 					}
 
 					// Cache ALL actionable results during dry-run for later application.
-					if ( $dry_run && in_array( $result['action'], array( 'assign', 'create' ), true ) ) {
+					if ( $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
 						$dryrun_cache[] = $result;
 					}
 				}
@@ -414,8 +414,8 @@ class MediaScannerService {
 				}
 
 				// Update progress.
-				$new_processed = $progress['processed'] + count( $batch_ids );
-				$all_results   = array_merge( $progress['results'] ?? array(), $batch_results );
+				$new_processed = $progress[ 'processed' ] + count( $batch_ids );
+				$all_results   = array_merge( $progress[ 'results' ] ?? array(), $batch_results );
 
 				// Keep only last 100 results in progress for memory efficiency.
 				if ( count( $all_results ) > 100 ) {
@@ -431,7 +431,7 @@ class MediaScannerService {
 
 				// Check for cancellation before scheduling next batch.
 				$final_progress = $this->get_progress();
-				if ( 'running' !== $final_progress['status'] ) {
+				if ( 'running' !== $final_progress[ 'status' ] ) {
 					// Scan was cancelled, don't schedule next batch.
 					return;
 				}
@@ -783,7 +783,7 @@ class MediaScannerService {
 
 				// For successful reorganize_all, clean up backup after some time.
 				// Keep backup for manual restore if needed.
-
+	
 				/**
 				 * Fires when a scan is completed.
 				 *
