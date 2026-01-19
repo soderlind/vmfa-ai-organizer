@@ -86,6 +86,11 @@ class MediaScannerService {
 	 */
 	private function require_action_scheduler(): void {
 		if ( ! $this->is_action_scheduler_available() ) {
+			// Attempt to load Action Scheduler if it's bundled but not yet initialized.
+			Plugin::maybe_load_action_scheduler();
+		}
+
+		if ( ! $this->is_action_scheduler_available() ) {
 			throw new \RuntimeException(
 				__( 'Action Scheduler is not available. Please ensure the plugin is properly installed.', 'vmfa-ai-organizer' )
 			);

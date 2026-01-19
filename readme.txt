@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 0.5.4
+Stable tag: 0.5.5
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,13 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 0.5.5 =
+* Fixed Action Scheduler loading for release packaging differences
+* Plugin now loads Action Scheduler from either vendor/ or woocommerce/ when bundled
+
+= 0.5.4 =
+* Added explicit check for Action Scheduler in release workflow (build fails if missing)
 
 = 0.5.3 =
 * Fixed Action Scheduler loading order - now loads at plugin file level instead of plugins_loaded hook

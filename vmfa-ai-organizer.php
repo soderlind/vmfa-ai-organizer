@@ -3,7 +3,7 @@
  * Plugin Name:       Virtual Media Folders - AI Organizer
  * Plugin URI:        https://github.com/soderlind/vmfa-ai-organizer
  * Description:       AI-powered media organization add-on for Virtual Media Folders. Scans the WordPress Media Library and uses AI to place media in suitable virtual folders.
- * Version:           0.5.4
+ * Version:           0.5.5
  * Requires at least: 6.8
  * Requires PHP:      8.3
  * Requires Plugins:  virtual-media-folders
@@ -24,7 +24,7 @@ namespace VmfaAiOrganizer;
 defined( 'ABSPATH' ) || exit;
 
 // Plugin constants.
-define( 'VMFA_AI_ORGANIZER_VERSION', '0.5.4' );
+define( 'VMFA_AI_ORGANIZER_VERSION', '0.5.5' );
 define( 'VMFA_AI_ORGANIZER_FILE', __FILE__ );
 define( 'VMFA_AI_ORGANIZER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VMFA_AI_ORGANIZER_URL', plugin_dir_url( __FILE__ ) );
@@ -36,8 +36,19 @@ if ( file_exists( VMFA_AI_ORGANIZER_PATH . 'vendor/autoload.php' ) ) {
 
 // Initialize Action Scheduler early (must be loaded before plugins_loaded).
 // Action Scheduler uses its own version management, so it's safe to load even if another plugin bundles it.
-if ( ! class_exists( 'ActionScheduler' ) && file_exists( VMFA_AI_ORGANIZER_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
-	require_once VMFA_AI_ORGANIZER_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+// Note: depending on build/packaging, Action Scheduler may live in vendor/ or in woocommerce/.
+if ( ! function_exists( 'as_schedule_single_action' ) ) {
+	$action_scheduler_paths = array(
+		VMFA_AI_ORGANIZER_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php',
+		VMFA_AI_ORGANIZER_PATH . 'woocommerce/action-scheduler/action-scheduler.php',
+	);
+
+	foreach ( $action_scheduler_paths as $action_scheduler_path ) {
+		if ( file_exists( $action_scheduler_path ) ) {
+			require_once $action_scheduler_path;
+			break;
+		}
+	}
 }
 
 /**

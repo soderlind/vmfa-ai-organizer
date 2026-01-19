@@ -40,7 +40,9 @@ jobs:
           
           # Verify Action Scheduler is included (required dependency)
           if unzip -l vmfa-ai-organizer.zip | grep -q "vendor/woocommerce/action-scheduler/action-scheduler.php"; then
-            echo "✓ Action Scheduler is included"
+            echo "✓ Action Scheduler is included (vendor/)"
+          elif unzip -l vmfa-ai-organizer.zip | grep -q "woocommerce/action-scheduler/action-scheduler.php"; then
+            echo "✓ Action Scheduler is included (woocommerce/)"
           else
             echo "✗ ERROR: Action Scheduler is missing from the release!"
             exit 1
