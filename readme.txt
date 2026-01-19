@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,10 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 0.5.2 =
+* Fixed fatal error when Action Scheduler functions called without global namespace prefix
+* Affected WP-CLI scans on production sites without WooCommerce
 
 = 0.5.1 =
 * Housekeeping

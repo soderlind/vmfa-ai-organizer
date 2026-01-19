@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-01-19
+
+### Fixed
+- **Action Scheduler Namespace**: Fixed fatal error `Call to undefined function VmfaAiOrganizer\Services\as_schedule_single_action()`
+  - Added global namespace prefix (`\`) to all Action Scheduler function calls
+  - Affected: `as_schedule_single_action()`, `as_unschedule_all_actions()`, `as_get_datetime_object()`
+  - Issue occurred on production sites where Action Scheduler wasn't pre-loaded by WooCommerce
+
 ## [0.5.1] - 2026-01-17
 
 ### Changed
