@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-01-19
+
+### Fixed
+- **Scheduler Fallback**: Prevent fatal errors when Action Scheduler is not available
+  - Scan scheduling now falls back to WP-Cron when Action Scheduler functions are missing
+  - Cancel operation also clears WP-Cron scheduled events for scan hooks
+
 ## [0.5.5] - 2026-01-19
 
 ### Fixed
