@@ -79,22 +79,86 @@ class MediaScannerService {
 	}
 
 	/**
-	 * Ensure Action Scheduler is available, throw exception if not.
+	 * Schedule a single async action.
 	 *
-	 * @throws \RuntimeException If Action Scheduler is not available.
-	 * @return void
+	 * Prefers Action Scheduler when available, falls back to WP-Cron when not.
+	 *
+	 * @param string $hook Hook name.
+	 * @param array  $args Hook arguments.
+	 * @param int    $timestamp When to run (unix timestamp). Defaults to now.
+	 * @return bool True if the action was scheduled.
 	 */
-	private function require_action_scheduler(): void {
-		if ( ! $this->is_action_scheduler_available() ) {
-			// Attempt to load Action Scheduler if it's bundled but not yet initialized.
-			Plugin::maybe_load_action_scheduler();
+	private function schedule_single_action( string $hook, array $args = array(), int $timestamp = 0 ): bool {
+		$when = $timestamp > 0 ? $timestamp : time();
+
+		// Attempt to load Action Scheduler if it's bundled but not yet initialized.
+		Plugin::maybe_load_action_scheduler();
+
+		if ( $this->is_action_scheduler_available() ) {
+			\as_schedule_single_action( $when, $hook, $args, 'vmfa-ai-organizer' );
+			return true;
 		}
 
-		if ( ! $this->is_action_scheduler_available() ) {
-			throw new \RuntimeException(
-				__( 'Action Scheduler is not available. Please ensure the plugin is properly installed.', 'vmfa-ai-organizer' )
-			);
+		// Fallback to WP-Cron.
+		if ( function_exists( 'wp_schedule_single_event' ) ) {
+			$result = \wp_schedule_single_event( $when, $hook, $args );
+			if ( function_exists( 'is_wp_error' ) && \is_wp_error( $result ) ) {
+				return false;
+			}
+			return (bool) $result;
 		}
+
+		return false;
+	}
+
+	/**
+	 * Mark the current scan as errored.
+	 *
+	 * @param string $message Error message.
+	 * @return void
+	 */
+	private function mark_scan_error( string $message ): void {
+		$this->update_progress(
+			array(
+				'status'       => 'error',
+				'error'        => $message,
+				'completed_at' => time(),
+			)
+		);
+	}
+
+	/**
+	 * Unschedule all WP-Cron events for a hook.
+	 *
+	 * @param string $hook Hook name.
+	 * @return void
+	 */
+	private function unschedule_wp_cron_hook( string $hook ): void {
+		if ( function_exists( 'wp_unschedule_hook' ) ) {
+			\wp_unschedule_hook( $hook );
+			return;
+		}
+
+		if ( ! function_exists( '_get_cron_array' ) || ! function_exists( '_set_cron_array' ) ) {
+			return;
+		}
+
+		$crons = \_get_cron_array();
+		if ( ! is_array( $crons ) ) {
+			return;
+		}
+
+		foreach ( $crons as $timestamp => $cron ) {
+			if ( ! is_array( $cron ) || empty( $cron[ $hook ] ) ) {
+				continue;
+			}
+			unset( $crons[ $timestamp ][ $hook ] );
+			if ( empty( $crons[ $timestamp ] ) ) {
+				unset( $crons[ $timestamp ] );
+			}
+		}
+
+		\_set_cron_array( $crons );
 	}
 
 	/**
@@ -166,7 +230,17 @@ class MediaScannerService {
 		}
 
 		$batch_size = $this->get_batch_size();
-		$this->schedule_scan_start_actions( $mode, $dry_run, $batch_size );
+		if ( ! $this->schedule_scan_start_actions( $mode, $dry_run, $batch_size ) ) {
+			$message = __( 'Unable to schedule scan. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' );
+			$this->mark_scan_error( $message );
+			delete_option( 'vmfa_scan_attachment_ids' );
+			delete_option( self::PENDING_RESULTS_OPTION );
+
+			return array(
+				'success' => false,
+				'message' => $message,
+			);
+		}
 
 		return array(
 			'success' => true,
@@ -200,7 +274,9 @@ class MediaScannerService {
 		// Clear session-suggested folders for fresh start.
 		delete_option( 'vmfa_session_suggested_folders' );
 
-		$this->schedule_first_batch( (bool) ( $progress[ 'dry_run' ] ?? false ), $this->get_batch_size() );
+		if ( ! $this->schedule_first_batch( (bool) ( $progress[ 'dry_run' ] ?? false ), $this->get_batch_size() ) ) {
+			$this->mark_scan_error( __( 'Unable to schedule first batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+		}
 	}
 
 	/**
@@ -309,17 +385,16 @@ class MediaScannerService {
 		}
 
 		// Schedule next batch.
-		$this->require_action_scheduler();
-		\as_schedule_single_action(
-			time(),
+		if ( ! $this->schedule_single_action(
 			'vmfa_process_media_batch',
 			array(
 				'batch_number' => $batch_number + 1,
 				'batch_size'   => $batch_size,
 				'dry_run'      => $dry_run,
-			),
-			'vmfa-ai-organizer'
-		);
+			)
+		) ) {
+			$this->mark_scan_error( __( 'Unable to schedule next batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+		}
 	}
 
 	/**
@@ -355,13 +430,9 @@ class MediaScannerService {
 		delete_option( self::PENDING_RESULTS_OPTION );
 
 		// Schedule finalization.
-		$this->require_action_scheduler();
-		\as_schedule_single_action(
-			time(),
-			'vmfa_finalize_scan',
-			array(),
-			'vmfa-ai-organizer'
-		);
+		if ( ! $this->schedule_single_action( 'vmfa_finalize_scan', array() ) ) {
+			$this->mark_scan_error( __( 'Unable to schedule scan finalization. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+		}
 	}
 
 	/**
@@ -538,21 +609,14 @@ class MediaScannerService {
 	 * @param int    $batch_size Batch size.
 	 * @return void
 	 */
-	private function schedule_scan_start_actions( string $mode, bool $dry_run, int $batch_size ): void {
-		$this->require_action_scheduler();
+	private function schedule_scan_start_actions( string $mode, bool $dry_run, int $batch_size ): bool {
 
 		// For reorganize_all mode, schedule folder cleanup first (only when not previewing).
 		if ( 'reorganize_all' === $mode && ! $dry_run ) {
-			\as_schedule_single_action(
-				time(),
-				'vmfa_cleanup_folders',
-				array(),
-				'vmfa-ai-organizer'
-			);
-			return;
+			return $this->schedule_single_action( 'vmfa_cleanup_folders', array() );
 		}
 
-		$this->schedule_first_batch( $dry_run, $batch_size );
+		return $this->schedule_first_batch( $dry_run, $batch_size );
 	}
 
 	/**
@@ -562,18 +626,14 @@ class MediaScannerService {
 	 * @param int  $batch_size Batch size.
 	 * @return void
 	 */
-	private function schedule_first_batch( bool $dry_run, int $batch_size ): void {
-		$this->require_action_scheduler();
-
-		\as_schedule_single_action(
-			time(),
+	private function schedule_first_batch( bool $dry_run, int $batch_size ): bool {
+		return $this->schedule_single_action(
 			'vmfa_process_media_batch',
 			array(
 				'batch_number' => 0,
 				'batch_size'   => $batch_size,
 				'dry_run'      => $dry_run,
-			),
-			'vmfa-ai-organizer'
+			)
 		);
 	}
 
@@ -584,24 +644,10 @@ class MediaScannerService {
 	 * @return void
 	 */
 	private function schedule_completion( bool $dry_run ): void {
-		$this->require_action_scheduler();
-
-		if ( ! $dry_run ) {
-			\as_schedule_single_action(
-				time(),
-				'vmfa_apply_assignments',
-				array(),
-				'vmfa-ai-organizer'
-			);
-			return;
+		$hook = $dry_run ? 'vmfa_finalize_scan' : 'vmfa_apply_assignments';
+		if ( ! $this->schedule_single_action( $hook, array() ) ) {
+			$this->mark_scan_error( __( 'Unable to schedule scan completion. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
 		}
-
-		\as_schedule_single_action(
-			time(),
-			'vmfa_finalize_scan',
-			array(),
-			'vmfa-ai-organizer'
-		);
 	}
 
 	/**
@@ -708,6 +754,12 @@ class MediaScannerService {
 			\as_unschedule_all_actions( 'vmfa_finalize_scan', array(), 'vmfa-ai-organizer' );
 			\as_unschedule_all_actions( 'vmfa_cleanup_folders', array(), 'vmfa-ai-organizer' );
 		}
+
+		// Also clear WP-Cron events (used when Action Scheduler isn't available).
+		$this->unschedule_wp_cron_hook( 'vmfa_process_media_batch' );
+		$this->unschedule_wp_cron_hook( 'vmfa_apply_assignments' );
+		$this->unschedule_wp_cron_hook( 'vmfa_finalize_scan' );
+		$this->unschedule_wp_cron_hook( 'vmfa_cleanup_folders' );
 
 		// Cancel in-progress and failed actions for our group.
 		$this->cleanup_action_scheduler_group();
