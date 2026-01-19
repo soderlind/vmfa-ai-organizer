@@ -17,6 +17,52 @@ use VmfaAiOrganizer\Plugin;
 class MediaScannerService {
 
 	/**
+	 * Run a callback under the scan's saved locale (if available).
+	 *
+	 * WP-Cron/Action Scheduler runs without a logged-in user, which can change
+	 * locale resolution (site locale vs user locale). To keep AI prompt language
+	 * consistent throughout a scan, we capture the locale at scan start and
+	 * switch to it for background callbacks.
+	 *
+	 * @param callable $callback Callback to run.
+	 * @return mixed
+	 */
+	private function with_scan_locale( callable $callback ): mixed {
+		$progress = $this->get_progress();
+		$locale   = (string) ( $progress[ 'locale' ] ?? '' );
+
+		if ( '' === $locale ) {
+			return $callback();
+		}
+
+		if ( ! function_exists( 'switch_to_locale' ) || ! function_exists( 'restore_previous_locale' ) ) {
+			return $callback();
+		}
+
+		$switched = (bool) switch_to_locale( $locale );
+		try {
+			return $callback();
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
+	}
+
+	/**
+	 * Get the current locale for capturing at scan start.
+	 *
+	 * @return string
+	 */
+	private function get_current_scan_locale(): string {
+		if ( function_exists( 'determine_locale' ) ) {
+			return (string) determine_locale();
+		}
+
+		return (string) get_locale();
+	}
+
+	/**
 	 * Valid scan modes.
 	 *
 	 * @var array<string>
@@ -259,24 +305,28 @@ class MediaScannerService {
 	 * @return void
 	 */
 	public function cleanup_folders(): void {
-		$progress = $this->get_progress();
+		$this->with_scan_locale(
+			function (): void {
+				$progress = $this->get_progress();
 
-		if ( 'reorganize_all' !== $progress[ 'mode' ] ) {
-			return;
-		}
+				if ( 'reorganize_all' !== $progress[ 'mode' ] ) {
+					return;
+				}
 
-		// Remove all existing folders.
-		$this->backup_service->remove_all_folders();
+				// Remove all existing folders.
+				$this->backup_service->remove_all_folders();
 
-		// Force refresh the folder paths cache to ensure it's empty.
-		$this->analysis_service->get_folder_paths( true );
+				// Force refresh the folder paths cache to ensure it's empty.
+				$this->analysis_service->get_folder_paths( true );
 
-		// Clear session-suggested folders for fresh start.
-		delete_option( 'vmfa_session_suggested_folders' );
+				// Clear session-suggested folders for fresh start.
+				delete_option( 'vmfa_session_suggested_folders' );
 
-		if ( ! $this->schedule_first_batch( (bool) ( $progress[ 'dry_run' ] ?? false ), $this->get_batch_size() ) ) {
-			$this->mark_scan_error( __( 'Unable to schedule first batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
-		}
+				if ( ! $this->schedule_first_batch( (bool) ( $progress[ 'dry_run' ] ?? false ), $this->get_batch_size() ) ) {
+					$this->mark_scan_error( __( 'Unable to schedule first batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+				}
+			}
+		);
 	}
 
 	/**
@@ -288,113 +338,117 @@ class MediaScannerService {
 	 * @return void
 	 */
 	public function process_batch( int $batch_number, int $batch_size, bool $dry_run ): void {
-		$attachment_ids = get_option( 'vmfa_scan_attachment_ids', array() );
-		$progress       = $this->get_progress();
+		$this->with_scan_locale(
+			function () use ($batch_number, $batch_size, $dry_run): void {
+				$attachment_ids = get_option( 'vmfa_scan_attachment_ids', array() );
+				$progress       = $this->get_progress();
 
-		if ( empty( $attachment_ids ) || 'running' !== $progress[ 'status' ] ) {
-			return;
-		}
+				if ( empty( $attachment_ids ) || 'running' !== $progress[ 'status' ] ) {
+					return;
+				}
 
-		// Safety check: if already processed all items, finalize.
-		$total = count( $attachment_ids );
-		if ( $progress[ 'processed' ] >= $total ) {
-			$this->schedule_completion( $dry_run );
-			return;
-		}
+				// Safety check: if already processed all items, finalize.
+				$total = count( $attachment_ids );
+				if ( $progress[ 'processed' ] >= $total ) {
+					$this->schedule_completion( $dry_run );
+					return;
+				}
 
-		// Get batch of IDs based on what's already processed, not batch number.
-		// This prevents issues with duplicate action scheduler runs.
-		$batch_ids = array_slice( $attachment_ids, $progress[ 'processed' ], $batch_size );
+				// Get batch of IDs based on what's already processed, not batch number.
+				// This prevents issues with duplicate action scheduler runs.
+				$batch_ids = array_slice( $attachment_ids, $progress[ 'processed' ], $batch_size );
 
-		if ( empty( $batch_ids ) ) {
-			// No more batches, finalize.
-			$this->schedule_completion( $dry_run );
-			return;
-		}
+				if ( empty( $batch_ids ) ) {
+					// No more batches, finalize.
+					$this->schedule_completion( $dry_run );
+					return;
+				}
 
-		// Force refresh folder paths at start of each batch to ensure fresh data.
-		// This is critical for "Reorganize All" where folders are deleted before first batch.
-		$this->analysis_service->get_folder_paths( true );
+				// Force refresh folder paths at start of each batch to ensure fresh data.
+				// This is critical for "Reorganize All" where folders are deleted before first batch.
+				$this->analysis_service->get_folder_paths( true );
 
-		// Process each attachment in batch.
-		$batch_results   = array();
-		$pending_results = get_option( self::PENDING_RESULTS_OPTION, array() );
-		$dryrun_cache    = $dry_run ? get_option( self::DRYRUN_CACHE_OPTION, array() ) : array();
+				// Process each attachment in batch.
+				$batch_results   = array();
+				$pending_results = get_option( self::PENDING_RESULTS_OPTION, array() );
+				$dryrun_cache    = $dry_run ? get_option( self::DRYRUN_CACHE_OPTION, array() ) : array();
 
-		foreach ( $batch_ids as $attachment_id ) {
-			// Check for cancellation between each item.
-			$current_progress = $this->get_progress();
-			if ( 'running' !== $current_progress[ 'status' ] ) {
-				// Scan was cancelled, stop processing.
-				return;
+				foreach ( $batch_ids as $attachment_id ) {
+					// Check for cancellation between each item.
+					$current_progress = $this->get_progress();
+					if ( 'running' !== $current_progress[ 'status' ] ) {
+						// Scan was cancelled, stop processing.
+						return;
+					}
+
+					// Update current item being processed for CLI progress display.
+					$attachment      = get_post( $attachment_id );
+					$attachment_name = $attachment ? basename( get_attached_file( $attachment_id ) ?: $attachment->post_title ) : '';
+					$this->update_progress(
+						array(
+							'current_item'  => (int) $attachment_id,
+							'current_title' => $attachment_name,
+						)
+					);
+
+					$result          = $this->analysis_service->analyze_media( (int) $attachment_id );
+					$batch_results[] = $result;
+
+					// Store pending result for later application.
+					if ( ! $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
+						$pending_results[] = $result;
+					}
+
+					// Cache ALL actionable results during dry-run for later application.
+					if ( $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
+						$dryrun_cache[] = $result;
+					}
+				}
+
+				// Update pending results.
+				update_option( self::PENDING_RESULTS_OPTION, $pending_results, false );
+
+				// Update dry-run cache.
+				if ( $dry_run ) {
+					update_option( self::DRYRUN_CACHE_OPTION, $dryrun_cache, false );
+				}
+
+				// Update progress.
+				$new_processed = $progress[ 'processed' ] + count( $batch_ids );
+				$all_results   = array_merge( $progress[ 'results' ] ?? array(), $batch_results );
+
+				// Keep only last 100 results in progress for memory efficiency.
+				if ( count( $all_results ) > 100 ) {
+					$all_results = array_slice( $all_results, -100 );
+				}
+
+				$this->update_progress(
+					array(
+						'processed' => $new_processed,
+						'results'   => $all_results,
+					)
+				);
+
+				// Check for cancellation before scheduling next batch.
+				$final_progress = $this->get_progress();
+				if ( 'running' !== $final_progress[ 'status' ] ) {
+					// Scan was cancelled, don't schedule next batch.
+					return;
+				}
+
+				// Schedule next batch.
+				if ( ! $this->schedule_single_action(
+					'vmfa_process_media_batch',
+					array(
+						'batch_number' => $batch_number + 1,
+						'batch_size'   => $batch_size,
+						'dry_run'      => $dry_run,
+					)
+				) ) {
+					$this->mark_scan_error( __( 'Unable to schedule next batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+				}
 			}
-
-			// Update current item being processed for CLI progress display.
-			$attachment      = get_post( $attachment_id );
-			$attachment_name = $attachment ? basename( get_attached_file( $attachment_id ) ?: $attachment->post_title ) : '';
-			$this->update_progress(
-				array(
-					'current_item'  => (int) $attachment_id,
-					'current_title' => $attachment_name,
-				)
-			);
-
-			$result          = $this->analysis_service->analyze_media( (int) $attachment_id );
-			$batch_results[] = $result;
-
-			// Store pending result for later application.
-			if ( ! $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
-				$pending_results[] = $result;
-			}
-
-			// Cache ALL actionable results during dry-run for later application.
-			if ( $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
-				$dryrun_cache[] = $result;
-			}
-		}
-
-		// Update pending results.
-		update_option( self::PENDING_RESULTS_OPTION, $pending_results, false );
-
-		// Update dry-run cache.
-		if ( $dry_run ) {
-			update_option( self::DRYRUN_CACHE_OPTION, $dryrun_cache, false );
-		}
-
-		// Update progress.
-		$new_processed = $progress[ 'processed' ] + count( $batch_ids );
-		$all_results   = array_merge( $progress[ 'results' ] ?? array(), $batch_results );
-
-		// Keep only last 100 results in progress for memory efficiency.
-		if ( count( $all_results ) > 100 ) {
-			$all_results = array_slice( $all_results, -100 );
-		}
-
-		$this->update_progress(
-			array(
-				'processed' => $new_processed,
-				'results'   => $all_results,
-			)
 		);
-
-		// Check for cancellation before scheduling next batch.
-		$final_progress = $this->get_progress();
-		if ( 'running' !== $final_progress[ 'status' ] ) {
-			// Scan was cancelled, don't schedule next batch.
-			return;
-		}
-
-		// Schedule next batch.
-		if ( ! $this->schedule_single_action(
-			'vmfa_process_media_batch',
-			array(
-				'batch_number' => $batch_number + 1,
-				'batch_size'   => $batch_size,
-				'dry_run'      => $dry_run,
-			)
-		) ) {
-			$this->mark_scan_error( __( 'Unable to schedule next batch. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
-		}
 	}
 
 	/**
@@ -403,36 +457,39 @@ class MediaScannerService {
 	 * @return void
 	 */
 	public function apply_assignments(): void {
-		$pending_results = get_option( self::PENDING_RESULTS_OPTION, array() );
-		$progress        = $this->get_progress();
+		$this->with_scan_locale(
+			function (): void {
+				$pending_results = get_option( self::PENDING_RESULTS_OPTION, array() );
 
-		$applied = 0;
-		$failed  = 0;
+				$applied = 0;
+				$failed  = 0;
 
-		foreach ( $pending_results as $result ) {
-			$success = $this->analysis_service->apply_result( $result );
-			if ( $success ) {
-				++$applied;
-			} else {
-				++$failed;
+				foreach ( $pending_results as $result ) {
+					$success = $this->analysis_service->apply_result( $result );
+					if ( $success ) {
+						++$applied;
+					} else {
+						++$failed;
+					}
+				}
+
+				// Update progress with application results.
+				$this->update_progress(
+					array(
+						'applied' => $applied,
+						'failed'  => $failed,
+					)
+				);
+
+				// Clean up pending results.
+				delete_option( self::PENDING_RESULTS_OPTION );
+
+				// Schedule finalization.
+				if ( ! $this->schedule_single_action( 'vmfa_finalize_scan', array() ) ) {
+					$this->mark_scan_error( __( 'Unable to schedule scan finalization. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
+				}
 			}
-		}
-
-		// Update progress with application results.
-		$this->update_progress(
-			array(
-				'applied' => $applied,
-				'failed'  => $failed,
-			)
 		);
-
-		// Clean up pending results.
-		delete_option( self::PENDING_RESULTS_OPTION );
-
-		// Schedule finalization.
-		if ( ! $this->schedule_single_action( 'vmfa_finalize_scan', array() ) ) {
-			$this->mark_scan_error( __( 'Unable to schedule scan finalization. Please ensure WP-Cron is enabled or install Action Scheduler.', 'vmfa-ai-organizer' ) );
-		}
 	}
 
 	/**
@@ -582,6 +639,7 @@ class MediaScannerService {
 				'status'       => 'running',
 				'mode'         => $mode,
 				'dry_run'      => $dry_run,
+				'locale'       => $this->get_current_scan_locale(),
 				'total'        => $total,
 				'processed'    => 0,
 				'results'      => array(),
@@ -708,28 +766,32 @@ class MediaScannerService {
 	 * @return void
 	 */
 	public function finalize_scan(): void {
-		$progress = $this->get_progress();
+		$this->with_scan_locale(
+			function (): void {
+				$progress = $this->get_progress();
 
-		$this->update_progress(
-			array(
-				'status'       => 'completed',
-				'completed_at' => time(),
-			)
+				$this->update_progress(
+					array(
+						'status'       => 'completed',
+						'completed_at' => time(),
+					)
+				);
+
+				// Clean up temporary data.
+				delete_option( 'vmfa_scan_attachment_ids' );
+				delete_option( self::PENDING_RESULTS_OPTION );
+
+				// For successful reorganize_all, clean up backup after some time.
+				// Keep backup for manual restore if needed.
+	
+				/**
+				 * Fires when a scan is completed.
+				 *
+				 * @param array $progress Final progress data.
+				 */
+				do_action( 'vmfa_scan_completed', $progress );
+			}
 		);
-
-		// Clean up temporary data.
-		delete_option( 'vmfa_scan_attachment_ids' );
-		delete_option( self::PENDING_RESULTS_OPTION );
-
-		// For successful reorganize_all, clean up backup after some time.
-		// Keep backup for manual restore if needed.
-
-		/**
-		 * Fires when a scan is completed.
-		 *
-		 * @param array $progress Final progress data.
-		 */
-		do_action( 'vmfa_scan_completed', $progress );
 	}
 
 	/**
@@ -854,6 +916,7 @@ class MediaScannerService {
 			'status'        => 'idle',
 			'mode'          => '',
 			'dry_run'       => false,
+			'locale'        => '',
 			'total'         => 0,
 			'processed'     => 0,
 			'results'       => array(),
