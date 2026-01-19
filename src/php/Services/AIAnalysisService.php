@@ -19,6 +19,121 @@ use VmfaAiOrganizer\Plugin;
 class AIAnalysisService {
 
 	/**
+	 * Max image bytes to send to providers (10MB).
+	 */
+	private const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+	/**
+	 * Whether debug logging is enabled.
+	 *
+	 * @return bool
+	 */
+	private function is_debug_enabled(): bool {
+		return defined( 'VMFA_AI_DEBUG' ) && (bool) VMFA_AI_DEBUG;
+	}
+
+	/**
+	 * Write a debug log line (when enabled).
+	 *
+	 * @param string               $message Message.
+	 * @param array<string, mixed> $context Context.
+	 * @return void
+	 */
+	private function debug_log( string $message, array $context = array() ): void {
+		if ( ! $this->is_debug_enabled() ) {
+			return;
+		}
+
+		$line = '[VMFA AI] ' . $message;
+		if ( ! empty( $context ) ) {
+			$line .= ' ' . wp_json_encode( $context );
+		}
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( $line );
+	}
+
+	/**
+	 * Fetch image bytes from a URL (e.g., offloaded media).
+	 *
+	 * @param string $url Attachment URL.
+	 * @param string $fallback_mime_type Fallback MIME type.
+	 * @return array{base64: string, mime_type: string}|null
+	 */
+	private function get_image_data_from_url( string $url, string $fallback_mime_type ): ?array {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return null;
+		}
+
+		$parts  = wp_parse_url( $url );
+		$scheme = is_array( $parts ) ? ( $parts['scheme'] ?? '' ) : '';
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return null;
+		}
+
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout'     => 15,
+				'redirection' => 3,
+				'sslverify'   => true,
+				'headers'     => array(
+					'Accept' => 'image/*',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			$this->debug_log( 'Remote image fetch failed', array( 'url' => $url, 'error' => $response->get_error_message() ) );
+			return null;
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			$this->debug_log( 'Remote image fetch non-200', array( 'url' => $url, 'status' => $status_code ) );
+			return null;
+		}
+
+		$header_content_type = (string) wp_remote_retrieve_header( $response, 'content-type' );
+		$header_content_type = strtolower( trim( explode( ';', $header_content_type )[0] ?? '' ) );
+
+		$mime_type = $header_content_type ?: $fallback_mime_type;
+		$mime_type = strtolower( trim( $mime_type ) );
+
+		$supported_types = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+		if ( ! in_array( $mime_type, $supported_types, true ) ) {
+			$this->debug_log( 'Remote image unsupported content-type', array( 'url' => $url, 'mime_type' => $mime_type ) );
+			return null;
+		}
+
+		$body = (string) wp_remote_retrieve_body( $response );
+		if ( '' === $body ) {
+			$this->debug_log( 'Remote image empty body', array( 'url' => $url ) );
+			return null;
+		}
+
+		if ( strlen( $body ) > self::MAX_IMAGE_BYTES ) {
+			$this->debug_log( 'Remote image too large', array( 'url' => $url, 'bytes' => strlen( $body ) ) );
+			return null;
+		}
+
+		$this->debug_log(
+			'Remote image fetched',
+			array(
+				'url'       => $url,
+				'mime_type' => $mime_type,
+				'bytes'     => strlen( $body ),
+				'hash'      => substr( sha1( $body ), 0, 12 ),
+			)
+		);
+
+		return array(
+			'base64'    => base64_encode( $body ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+			'mime_type' => $mime_type,
+		);
+	}
+
+	/**
 	 * Scan progress option key.
 	 */
 	private const PROGRESS_OPTION = 'vmfa_scan_progress';
@@ -487,47 +602,69 @@ class AIAnalysisService {
 			return null;
 		}
 
-		// Get file path.
+		// Get file path (may be empty when media is offloaded).
 		$file_path = get_attached_file( $attachment_id );
-		if ( empty( $file_path ) || ! file_exists( $file_path ) ) {
-			return null;
-		}
 
 		// Try to get a smaller size for efficiency (medium or large).
 		// This reduces token usage for vision APIs.
 		$image_sizes = array( 'medium_large', 'medium', 'large' );
 		$image_path  = $file_path;
 
-		foreach ( $image_sizes as $size ) {
-			$image_src = wp_get_attachment_image_src( $attachment_id, $size );
-			if ( $image_src ) {
-				$sized_path = str_replace(
-					wp_basename( $file_path ),
-					wp_basename( $image_src[ 0 ] ),
-					$file_path
-				);
-				if ( file_exists( $sized_path ) ) {
-					$image_path = $sized_path;
-					break;
+		// Prefer local file read when possible.
+		if ( ! empty( $file_path ) && file_exists( $file_path ) ) {
+			foreach ( $image_sizes as $size ) {
+				$image_src = wp_get_attachment_image_src( $attachment_id, $size );
+				if ( $image_src ) {
+					$sized_path = str_replace(
+						wp_basename( $file_path ),
+						wp_basename( $image_src[ 0 ] ),
+						$file_path
+					);
+					if ( file_exists( $sized_path ) ) {
+						$image_path = $sized_path;
+						break;
+					}
 				}
 			}
+
+			if ( is_readable( $image_path ) ) {
+				$image_content = file_get_contents( $image_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				if ( false !== $image_content ) {
+					if ( strlen( $image_content ) <= self::MAX_IMAGE_BYTES ) {
+						$this->debug_log(
+							'Local image read',
+							array(
+								'path'  => $image_path,
+								'bytes' => strlen( $image_content ),
+								'hash'  => substr( sha1( $image_content ), 0, 12 ),
+							)
+						);
+						return array(
+							'base64'    => base64_encode( $image_content ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+							'mime_type' => $mime_type,
+						);
+					}
+
+					$this->debug_log( 'Local image too large', array( 'path' => $image_path, 'bytes' => strlen( $image_content ) ) );
+					return null;
+				}
+			}
+
+			$this->debug_log( 'Local image not readable', array( 'path' => $image_path ) );
 		}
 
-		// Read and encode image.
-		$image_content = file_get_contents( $image_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		if ( false === $image_content ) {
+		// Fallback: fetch via attachment URL (useful for offloaded media or cron contexts).
+		$image_url = wp_get_attachment_image_url( $attachment_id, 'medium_large' );
+		if ( empty( $image_url ) ) {
+			$image_url = wp_get_attachment_url( $attachment_id );
+		}
+
+		if ( empty( $image_url ) ) {
+			$this->debug_log( 'No attachment URL available for remote fetch', array( 'attachment_id' => $attachment_id ) );
 			return null;
 		}
 
-		// Check file size (limit to 10MB for API constraints).
-		if ( strlen( $image_content ) > 10 * 1024 * 1024 ) {
-			return null;
-		}
-
-		return array(
-			'base64'    => base64_encode( $image_content ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-			'mime_type' => $mime_type,
-		);
+		return $this->get_image_data_from_url( (string) $image_url, (string) $mime_type );
 	}
 
 	/**
@@ -543,13 +680,22 @@ class AIAnalysisService {
 			return array();
 		}
 
+		$file_path = get_attached_file( $attachment_id );
+		$filename  = basename( $file_path ?: '' );
+		if ( '' === $filename ) {
+			$guid_name = basename( (string) ( $attachment->guid ?? '' ) );
+			$filename  = $guid_name ?: (string) $attachment->post_title;
+		}
+
 		$metadata = array(
-			'filename'    => basename( get_attached_file( $attachment_id ) ?: '' ),
-			'mime_type'   => $attachment->post_mime_type,
-			'alt'         => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'caption'     => $attachment->post_excerpt,
-			'description' => $attachment->post_content,
-			'title'       => $attachment->post_title,
+			'attachment_id' => $attachment_id,
+			'url'           => wp_get_attachment_url( $attachment_id ),
+			'filename'      => $filename,
+			'mime_type'     => $attachment->post_mime_type,
+			'alt'           => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'caption'       => $attachment->post_excerpt,
+			'description'   => $attachment->post_content,
+			'title'         => $attachment->post_title,
 		);
 
 		// Get EXIF data for images.
