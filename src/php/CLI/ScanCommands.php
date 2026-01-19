@@ -669,7 +669,7 @@ class ScanCommands {
 				'status'       => \ActionScheduler_Store::STATUS_PENDING,
 				'group'        => 'vmfa-ai-organizer',
 				'per_page'     => 1,
-				'date'         => as_get_datetime_object(),
+				'date'         => \as_get_datetime_object(),
 				'date_compare' => '<=',
 			)
 		);
@@ -716,7 +716,7 @@ class ScanCommands {
 			try {
 				$store->mark_failure( $action_id );
 				// Re-schedule the same action.
-				as_schedule_single_action(
+				\as_schedule_single_action(
 					time(),
 					$action->get_hook(),
 					$action->get_args(),

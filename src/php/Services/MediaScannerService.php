@@ -281,7 +281,7 @@ class MediaScannerService {
 		}
 
 		// Schedule next batch.
-		as_schedule_single_action(
+		\as_schedule_single_action(
 			time(),
 			'vmfa_process_media_batch',
 			array(
@@ -326,7 +326,7 @@ class MediaScannerService {
 		delete_option( self::PENDING_RESULTS_OPTION );
 
 		// Schedule finalization.
-		as_schedule_single_action(
+		\as_schedule_single_action(
 			time(),
 			'vmfa_finalize_scan',
 			array(),
@@ -511,7 +511,7 @@ class MediaScannerService {
 	private function schedule_scan_start_actions( string $mode, bool $dry_run, int $batch_size ): void {
 		// For reorganize_all mode, schedule folder cleanup first (only when not previewing).
 		if ( 'reorganize_all' === $mode && ! $dry_run ) {
-			as_schedule_single_action(
+			\as_schedule_single_action(
 				time(),
 				'vmfa_cleanup_folders',
 				array(),
@@ -531,7 +531,7 @@ class MediaScannerService {
 	 * @return void
 	 */
 	private function schedule_first_batch( bool $dry_run, int $batch_size ): void {
-		as_schedule_single_action(
+		\as_schedule_single_action(
 			time(),
 			'vmfa_process_media_batch',
 			array(
@@ -551,7 +551,7 @@ class MediaScannerService {
 	 */
 	private function schedule_completion( bool $dry_run ): void {
 		if ( ! $dry_run ) {
-			as_schedule_single_action(
+			\as_schedule_single_action(
 				time(),
 				'vmfa_apply_assignments',
 				array(),
@@ -560,7 +560,7 @@ class MediaScannerService {
 			return;
 		}
 
-		as_schedule_single_action(
+		\as_schedule_single_action(
 			time(),
 			'vmfa_finalize_scan',
 			array(),
@@ -666,10 +666,10 @@ class MediaScannerService {
 		}
 
 		// Unschedule all pending actions.
-		as_unschedule_all_actions( 'vmfa_process_media_batch', array(), 'vmfa-ai-organizer' );
-		as_unschedule_all_actions( 'vmfa_apply_assignments', array(), 'vmfa-ai-organizer' );
-		as_unschedule_all_actions( 'vmfa_finalize_scan', array(), 'vmfa-ai-organizer' );
-		as_unschedule_all_actions( 'vmfa_cleanup_folders', array(), 'vmfa-ai-organizer' );
+		\as_unschedule_all_actions( 'vmfa_process_media_batch', array(), 'vmfa-ai-organizer' );
+		\as_unschedule_all_actions( 'vmfa_apply_assignments', array(), 'vmfa-ai-organizer' );
+		\as_unschedule_all_actions( 'vmfa_finalize_scan', array(), 'vmfa-ai-organizer' );
+		\as_unschedule_all_actions( 'vmfa_cleanup_folders', array(), 'vmfa-ai-organizer' );
 
 		// Cancel in-progress and failed actions for our group.
 		$this->cleanup_action_scheduler_group();
