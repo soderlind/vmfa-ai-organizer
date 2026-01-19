@@ -70,6 +70,29 @@ class MediaScannerService {
 	}
 
 	/**
+	 * Check if Action Scheduler is available.
+	 *
+	 * @return bool
+	 */
+	private function is_action_scheduler_available(): bool {
+		return function_exists( 'as_schedule_single_action' );
+	}
+
+	/**
+	 * Ensure Action Scheduler is available, throw exception if not.
+	 *
+	 * @throws \RuntimeException If Action Scheduler is not available.
+	 * @return void
+	 */
+	private function require_action_scheduler(): void {
+		if ( ! $this->is_action_scheduler_available() ) {
+			throw new \RuntimeException(
+				__( 'Action Scheduler is not available. Please ensure the plugin is properly installed.', 'vmfa-ai-organizer' )
+			);
+		}
+	}
+
+	/**
 	 * Register Action Scheduler hooks.
 	 *
 	 * @return void
@@ -281,6 +304,7 @@ class MediaScannerService {
 		}
 
 		// Schedule next batch.
+		$this->require_action_scheduler();
 		\as_schedule_single_action(
 			time(),
 			'vmfa_process_media_batch',
@@ -326,6 +350,7 @@ class MediaScannerService {
 		delete_option( self::PENDING_RESULTS_OPTION );
 
 		// Schedule finalization.
+		$this->require_action_scheduler();
 		\as_schedule_single_action(
 			time(),
 			'vmfa_finalize_scan',
@@ -509,6 +534,8 @@ class MediaScannerService {
 	 * @return void
 	 */
 	private function schedule_scan_start_actions( string $mode, bool $dry_run, int $batch_size ): void {
+		$this->require_action_scheduler();
+
 		// For reorganize_all mode, schedule folder cleanup first (only when not previewing).
 		if ( 'reorganize_all' === $mode && ! $dry_run ) {
 			\as_schedule_single_action(
@@ -531,6 +558,8 @@ class MediaScannerService {
 	 * @return void
 	 */
 	private function schedule_first_batch( bool $dry_run, int $batch_size ): void {
+		$this->require_action_scheduler();
+
 		\as_schedule_single_action(
 			time(),
 			'vmfa_process_media_batch',
@@ -550,6 +579,8 @@ class MediaScannerService {
 	 * @return void
 	 */
 	private function schedule_completion( bool $dry_run ): void {
+		$this->require_action_scheduler();
+
 		if ( ! $dry_run ) {
 			\as_schedule_single_action(
 				time(),
@@ -666,10 +697,12 @@ class MediaScannerService {
 		}
 
 		// Unschedule all pending actions.
-		\as_unschedule_all_actions( 'vmfa_process_media_batch', array(), 'vmfa-ai-organizer' );
-		\as_unschedule_all_actions( 'vmfa_apply_assignments', array(), 'vmfa-ai-organizer' );
-		\as_unschedule_all_actions( 'vmfa_finalize_scan', array(), 'vmfa-ai-organizer' );
-		\as_unschedule_all_actions( 'vmfa_cleanup_folders', array(), 'vmfa-ai-organizer' );
+		if ( $this->is_action_scheduler_available() ) {
+			\as_unschedule_all_actions( 'vmfa_process_media_batch', array(), 'vmfa-ai-organizer' );
+			\as_unschedule_all_actions( 'vmfa_apply_assignments', array(), 'vmfa-ai-organizer' );
+			\as_unschedule_all_actions( 'vmfa_finalize_scan', array(), 'vmfa-ai-organizer' );
+			\as_unschedule_all_actions( 'vmfa_cleanup_folders', array(), 'vmfa-ai-organizer' );
+		}
 
 		// Cancel in-progress and failed actions for our group.
 		$this->cleanup_action_scheduler_group();
