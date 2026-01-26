@@ -234,52 +234,40 @@ export function AiOrganizerPanel() {
 
 			{/* Statistics Card */}
 			{stats && (
-				<Card className="vmfa-stats-card">
-					<CardHeader>
-						<h3>
-							{__(
-								'Media Library Statistics',
-								'vmfa-ai-organizer'
-							)}
-						</h3>
-					</CardHeader>
-					<CardBody>
-						<div className="vmfa-stats-grid">
-							<div className="vmfa-stat">
-								<span className="vmfa-stat-value">
-									{stats.total_media}
-								</span>
-								<span className="vmfa-stat-label">
-									{__('Total Media', 'vmfa-ai-organizer')}
-								</span>
-							</div>
-							<div className="vmfa-stat">
-								<span className="vmfa-stat-value">
-									{stats.assigned}
-								</span>
-								<span className="vmfa-stat-label">
-									{__('In Folders', 'vmfa-ai-organizer')}
-								</span>
-							</div>
-							<div className="vmfa-stat">
-								<span className="vmfa-stat-value">
-									{stats.unassigned}
-								</span>
-								<span className="vmfa-stat-label">
-									{__('Unassigned', 'vmfa-ai-organizer')}
-								</span>
-							</div>
-							<div className="vmfa-stat">
-								<span className="vmfa-stat-value">
-									{stats.folders}
-								</span>
-								<span className="vmfa-stat-label">
-									{__('Folders', 'vmfa-ai-organizer')}
-								</span>
-							</div>
+				<div className="vmfa-stats-card vmfa-card">
+					<div className="vmfa-stat-item">
+						<div className="vmfa-stat-value">
+							{stats.total_media}
 						</div>
-					</CardBody>
-				</Card>
+						<div className="vmfa-stat-label">
+							{__('Total Media', 'vmfa-ai-organizer')}
+						</div>
+					</div>
+					<div className="vmfa-stat-item">
+						<div className="vmfa-stat-value">
+							{stats.assigned}
+						</div>
+						<div className="vmfa-stat-label">
+							{__('In Folders', 'vmfa-ai-organizer')}
+						</div>
+					</div>
+					<div className="vmfa-stat-item">
+						<div className="vmfa-stat-value">
+							{stats.unassigned}
+						</div>
+						<div className="vmfa-stat-label">
+							{__('Unassigned', 'vmfa-ai-organizer')}
+						</div>
+					</div>
+					<div className="vmfa-stat-item">
+						<div className="vmfa-stat-value">
+							{stats.folders}
+						</div>
+						<div className="vmfa-stat-label">
+							{__('Folders', 'vmfa-ai-organizer')}
+						</div>
+					</div>
+				</div>
 			)}
 
 			{/* Scan Controls */}
