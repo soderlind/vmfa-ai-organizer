@@ -131,7 +131,7 @@ class SettingsPage {
 		'allow_new_folders' => array(
 			'env'     => 'VMFA_AI_ALLOW_NEW_FOLDERS',
 			'const'   => 'VMFA_AI_ALLOW_NEW_FOLDERS',
-			'default' => false,
+			'default' => true,
 		),
 		'batch_size'        => array(
 			'env'     => 'VMFA_AI_BATCH_SIZE',

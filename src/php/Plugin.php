@@ -270,7 +270,7 @@ final class Plugin {
 			'exo_endpoint'      => '',
 			'exo_model'         => '',
 			'max_folder_depth'  => 3,
-			'allow_new_folders' => false,
+			'allow_new_folders' => true,
 			'batch_size'        => 20,
 		);
 
