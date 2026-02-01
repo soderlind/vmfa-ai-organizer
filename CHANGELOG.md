@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-02-01
+
+### Changed
+- **Dependencies**: Updated WordPress packages (@wordpress/components 32.1.0, @wordpress/scripts 31.4.0, @wordpress/eslint-plugin 24.1.0, and others)
+- **Dev Dependencies**: Updated vitest to 4.0.18, @testing-library/react to 16.3.2
+
 ## [1.0.0] - 2026-01-26
 
 ### Changed
