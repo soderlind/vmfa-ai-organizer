@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,18 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.0.1 =
+* Updated WordPress packages (@wordpress/components 32.1.0, @wordpress/scripts 31.4.0, @wordpress/eslint-plugin 24.1.0, and others)
+* Updated dev dependencies (vitest 4.0.18, @testing-library/react 16.3.2)
+
+= 1.0.0 =
+* First stable release of Virtual Media Folders AI Organizer
+* Comprehensive AI-powered media organization with vision analysis
+* Full support for multiple AI providers (OpenAI, Azure OpenAI, Anthropic, Google Gemini, Ollama, Grok, Exo)
+* Background processing with Action Scheduler and WP-Cron fallback
+* Complete WP-CLI support for automation
+* Preview mode with backup and restore functionality
 
 = 0.6.0 =
 * Improved scan reliability across hosts

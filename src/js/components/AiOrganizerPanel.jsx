@@ -244,9 +244,7 @@ export function AiOrganizerPanel() {
 						</div>
 					</div>
 					<div className="vmfa-stat-item">
-						<div className="vmfa-stat-value">
-							{stats.assigned}
-						</div>
+						<div className="vmfa-stat-value">{stats.assigned}</div>
 						<div className="vmfa-stat-label">
 							{__('In Folders', 'vmfa-ai-organizer')}
 						</div>
@@ -260,9 +258,7 @@ export function AiOrganizerPanel() {
 						</div>
 					</div>
 					<div className="vmfa-stat-item">
-						<div className="vmfa-stat-value">
-							{stats.folders}
-						</div>
+						<div className="vmfa-stat-value">{stats.folders}</div>
 						<div className="vmfa-stat-label">
 							{__('Folders', 'vmfa-ai-organizer')}
 						</div>
