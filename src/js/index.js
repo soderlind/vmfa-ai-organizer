@@ -15,8 +15,6 @@ import {
 	OverviewPage,
 	DashboardPage,
 	ConfigurePage,
-	ActionsPage,
-	LogsPage,
 } from './pages';
 
 import './styles/admin.scss';
@@ -126,22 +124,6 @@ function AiOrganizerApp() {
 			dashboardContent={
 				<DashboardPage
 					status={ status }
-					isLoading={ isLoading }
-					onCancel={ cancelScan }
-					onReset={ handleReset }
-				/>
-			}
-			configureContent={
-				<ConfigurePage
-					mode={ mode }
-					setMode={ setMode }
-					dryRun={ dryRun }
-					setDryRun={ setDryRun }
-				/>
-			}
-			actionsContent={
-				<ActionsPage
-					status={ status }
 					stats={ stats }
 					mode={ mode }
 					dryRun={ dryRun }
@@ -153,7 +135,14 @@ function AiOrganizerApp() {
 					onRefresh={ handleRefresh }
 				/>
 			}
-			logsContent={ <LogsPage /> }
+			configureContent={
+				<ConfigurePage
+					mode={ mode }
+					setMode={ setMode }
+					dryRun={ dryRun }
+					setDryRun={ setDryRun }
+				/>
+			}
 		/>
 	);
 }
