@@ -190,16 +190,13 @@ class SettingsPage {
 	/**
 	 * Render tab content within parent plugin's settings page.
 	 *
+	 * React handles all subtab navigation via AddonShell.
+	 *
 	 * @param string $active_tab    The currently active tab slug.
 	 * @param string $active_subtab The currently active subtab slug.
 	 * @return void
 	 */
 	public function render_tab_content( string $active_tab, string $active_subtab ): void {
-		// Default to scanner subtab.
-		if ( empty( $active_subtab ) ) {
-			$active_subtab = 'scanner';
-		}
-
 		// Show save confirmation.
 		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			add_settings_error(
@@ -212,26 +209,29 @@ class SettingsPage {
 
 		settings_errors( 'vmfa_messages' );
 
-		$base_url = admin_url( 'upload.php?page=' . \VirtualMediaFolders\Settings::PAGE_SLUG . '&tab=' . self::TAB_SLUG );
-
+		// Render container for React app - AddonShell handles subtab navigation.
 		?>
-		<nav class="nav-tab-wrapper vmfa-nav-tabs" style="margin-top: 1em;">
-			<a href="<?php echo esc_url( $base_url . '&subtab=scanner' ); ?>" 
-			   class="nav-tab <?php echo 'scanner' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'Media Scanner', 'vmfa-ai-organizer' ); ?>
-			</a>
-			<a href="<?php echo esc_url( $base_url . '&subtab=settings' ); ?>" 
-			   class="nav-tab <?php echo 'settings' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'Settings', 'vmfa-ai-organizer' ); ?>
-			</a>
-			<a href="<?php echo esc_url( $base_url . '&subtab=provider' ); ?>" 
-			   class="nav-tab <?php echo 'provider' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'AI Provider', 'vmfa-ai-organizer' ); ?>
-			</a>
-		</nav>
+		<div id="vmfa-ai-organizer-app">
+			<!-- React AddonShell component mounts here -->
+			<noscript>
+				<?php esc_html_e( 'JavaScript is required for the AI Organizer.', 'vmfa-ai-organizer' ); ?>
+			</noscript>
+		</div>
 
-		<div class="vmfa-tab-content">
-			<?php $this->render_subtab_content( $active_subtab ); ?>
+		<?php
+		// Render settings forms below the React app for Configure subtab.
+		// These are shown/hidden via CSS based on subtab.
+		$subtab = isset( $_GET['subtab'] ) ? sanitize_key( $_GET['subtab'] ) : 'overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		?>
+		<div class="vmfa-settings-forms" style="<?php echo 'configure' !== $subtab ? 'display:none;' : ''; ?>">
+			<form method="post" action="options.php" id="vmfa-ai-organizer-settings">
+				<?php
+				settings_fields( self::SETTINGS_GROUP );
+				do_settings_sections( 'vmfa-ai-organizer-settings' );
+				do_settings_sections( 'vmfa-ai-organizer-provider' );
+				submit_button( __( 'Save AI Settings', 'vmfa-ai-organizer' ) );
+				?>
+			</form>
 		</div>
 		<?php
 	}
@@ -333,10 +333,13 @@ class SettingsPage {
 
 		$asset = require $asset_file;
 
+		// Add vmfo-shared as dependency for AddonShell components.
+		$dependencies = array_merge( $asset['dependencies'], array( 'vmfo-shared' ) );
+
 		wp_enqueue_script(
 			'vmfa-ai-organizer-admin',
 			VMFA_AI_ORGANIZER_URL . 'build/index.js',
-			$asset['dependencies'],
+			$dependencies,
 			$asset['version'],
 			true
 		);
@@ -344,7 +347,7 @@ class SettingsPage {
 		wp_enqueue_style(
 			'vmfa-ai-organizer-admin',
 			VMFA_AI_ORGANIZER_URL . 'build/index.css',
-			array( 'wp-components' ),
+			array( 'wp-components', 'vmfo-shared' ),
 			$asset['version']
 		);
 
