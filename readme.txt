@@ -153,6 +153,11 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 == Changelog ==
 
+= 1.1.0 =
+* Fixed: Duplicate "Settings saved" notice when integrated with parent plugin subtabs
+* Changed: Integrated as subtab within parent plugin's settings page
+* Changed: Media Scanner, Settings, and AI Provider now appear as subtabs
+
 = 1.0.1 =
 * Updated WordPress packages (@wordpress/components 32.1.0, @wordpress/scripts 31.4.0, @wordpress/eslint-plugin 24.1.0, and others)
 * Updated dev dependencies (vitest 4.0.18, @testing-library/react 16.3.2)
