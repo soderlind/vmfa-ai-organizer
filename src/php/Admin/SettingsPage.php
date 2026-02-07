@@ -183,6 +183,11 @@ class SettingsPage {
 		$tabs[ self::TAB_SLUG ] = array(
 			'title'    => __( 'AI Organizer', 'vmfa-ai-organizer' ),
 			'callback' => array( $this, 'render_tab_content' ),
+			'subtabs'  => array(
+				'scanner'  => __( 'Media Scanner', 'vmfa-ai-organizer' ),
+				'settings' => __( 'Settings', 'vmfa-ai-organizer' ),
+				'provider' => __( 'AI Provider', 'vmfa-ai-organizer' ),
+			),
 		);
 		return $tabs;
 	}
@@ -190,48 +195,24 @@ class SettingsPage {
 	/**
 	 * Render tab content within parent plugin's settings page.
 	 *
-	 * React handles all subtab navigation via AddonShell.
+	 * Subtab navigation is handled by the parent plugin.
 	 *
 	 * @param string $active_tab    The currently active tab slug.
 	 * @param string $active_subtab The currently active subtab slug.
 	 * @return void
 	 */
 	public function render_tab_content( string $active_tab, string $active_subtab ): void {
-		// Show save confirmation.
-		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			add_settings_error(
-				'vmfa_messages',
-				'vmfa_message',
-				__( 'Settings saved.', 'vmfa-ai-organizer' ),
-				'updated'
-			);
+		// Default to scanner subtab.
+		if ( empty( $active_subtab ) ) {
+			$active_subtab = 'scanner';
 		}
 
-		settings_errors( 'vmfa_messages' );
+		// Note: Parent plugin handles "Settings saved" notice via settings_errors('vmfo_messages').
+		// We do NOT add our own notice here to avoid duplicates.
 
-		// Render container for React app - AddonShell handles subtab navigation.
 		?>
-		<div id="vmfa-ai-organizer-app">
-			<!-- React AddonShell component mounts here -->
-			<noscript>
-				<?php esc_html_e( 'JavaScript is required for the AI Organizer.', 'vmfa-ai-organizer' ); ?>
-			</noscript>
-		</div>
-
-		<?php
-		// Render settings forms below the React app for Configure subtab.
-		// These are shown/hidden via CSS based on subtab.
-		$subtab = isset( $_GET['subtab'] ) ? sanitize_key( $_GET['subtab'] ) : 'overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		?>
-		<div class="vmfa-settings-forms" style="<?php echo 'configure' !== $subtab ? 'display:none;' : ''; ?>">
-			<form method="post" action="options.php" id="vmfa-ai-organizer-settings">
-				<?php
-				settings_fields( self::SETTINGS_GROUP );
-				do_settings_sections( 'vmfa-ai-organizer-settings' );
-				do_settings_sections( 'vmfa-ai-organizer-provider' );
-				submit_button( __( 'Save AI Settings', 'vmfa-ai-organizer' ) );
-				?>
-			</form>
+		<div class="vmfa-tab-content">
+			<?php $this->render_subtab_content( $active_subtab ); ?>
 		</div>
 		<?php
 	}
@@ -333,13 +314,10 @@ class SettingsPage {
 
 		$asset = require $asset_file;
 
-		// Add vmfo-shared as dependency for AddonShell components.
-		$dependencies = array_merge( $asset['dependencies'], array( 'vmfo-shared' ) );
-
 		wp_enqueue_script(
 			'vmfa-ai-organizer-admin',
 			VMFA_AI_ORGANIZER_URL . 'build/index.js',
-			$dependencies,
+			$asset['dependencies'],
 			$asset['version'],
 			true
 		);
@@ -347,7 +325,7 @@ class SettingsPage {
 		wp_enqueue_style(
 			'vmfa-ai-organizer-admin',
 			VMFA_AI_ORGANIZER_URL . 'build/index.css',
-			array( 'wp-components', 'vmfo-shared' ),
+			array( 'wp-components' ),
 			$asset['version']
 		);
 
