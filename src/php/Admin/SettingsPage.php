@@ -183,12 +183,19 @@ class SettingsPage {
 		$tabs[ self::TAB_SLUG ] = array(
 			'title'    => __( 'AI Organizer', 'vmfa-ai-organizer' ),
 			'callback' => array( $this, 'render_tab_content' ),
+			'subtabs'  => array(
+				'scanner'  => __( 'Media Scanner', 'vmfa-ai-organizer' ),
+				'settings' => __( 'Settings', 'vmfa-ai-organizer' ),
+				'provider' => __( 'AI Provider', 'vmfa-ai-organizer' ),
+			),
 		);
 		return $tabs;
 	}
 
 	/**
 	 * Render tab content within parent plugin's settings page.
+	 *
+	 * Subtab navigation is handled by the parent plugin.
 	 *
 	 * @param string $active_tab    The currently active tab slug.
 	 * @param string $active_subtab The currently active subtab slug.
@@ -200,36 +207,10 @@ class SettingsPage {
 			$active_subtab = 'scanner';
 		}
 
-		// Show save confirmation.
-		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			add_settings_error(
-				'vmfa_messages',
-				'vmfa_message',
-				__( 'Settings saved.', 'vmfa-ai-organizer' ),
-				'updated'
-			);
-		}
-
-		settings_errors( 'vmfa_messages' );
-
-		$base_url = admin_url( 'upload.php?page=' . \VirtualMediaFolders\Settings::PAGE_SLUG . '&tab=' . self::TAB_SLUG );
+		// Note: Parent plugin handles "Settings saved" notice via settings_errors('vmfo_messages').
+		// We do NOT add our own notice here to avoid duplicates.
 
 		?>
-		<nav class="nav-tab-wrapper vmfa-nav-tabs" style="margin-top: 1em;">
-			<a href="<?php echo esc_url( $base_url . '&subtab=scanner' ); ?>" 
-			   class="nav-tab <?php echo 'scanner' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'Media Scanner', 'vmfa-ai-organizer' ); ?>
-			</a>
-			<a href="<?php echo esc_url( $base_url . '&subtab=settings' ); ?>" 
-			   class="nav-tab <?php echo 'settings' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'Settings', 'vmfa-ai-organizer' ); ?>
-			</a>
-			<a href="<?php echo esc_url( $base_url . '&subtab=provider' ); ?>" 
-			   class="nav-tab <?php echo 'provider' === $active_subtab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'AI Provider', 'vmfa-ai-organizer' ); ?>
-			</a>
-		</nav>
-
 		<div class="vmfa-tab-content">
 			<?php $this->render_subtab_content( $active_subtab ); ?>
 		</div>

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-07
+
+### Fixed
+
+- Fixed duplicate "Settings saved" notice when integrated with parent plugin subtabs
+- Parent plugin now handles settings_errors display, add-on no longer duplicates
+
+### Changed
+
+- Integrated as subtab within parent plugin's settings page
+- Media Scanner, Settings, and AI Provider now appear as subtabs
+
 ## [1.0.1] - 2026-02-01
 
 ### Changed
