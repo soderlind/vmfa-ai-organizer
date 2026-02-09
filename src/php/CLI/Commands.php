@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\CLI;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\AI\ProviderFactory;
 use VmfaAiOrganizer\Plugin;
 use VmfaAiOrganizer\Services\AIAnalysisService;

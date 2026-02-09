@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,11 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed: Added ABSPATH guards to all PHP source files
+* Fixed: Extracted inline Ollama/Exo provider scripts to enqueued external JS file
+* Added: uninstall.php for clean plugin removal
 
 = 1.1.0 =
 * Fixed: Duplicate "Settings saved" notice when integrated with parent plugin subtabs

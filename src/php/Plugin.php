@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\Admin\SettingsPage;
 use VmfaAiOrganizer\CLI\Commands;
 use VmfaAiOrganizer\REST\AnalysisController;

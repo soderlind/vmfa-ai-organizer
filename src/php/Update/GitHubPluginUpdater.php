@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\Update;
 
+defined( 'ABSPATH' ) || exit;
+
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 /**
