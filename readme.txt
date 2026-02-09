@@ -3,7 +3,7 @@ Contributors: starter
 Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordpresss-plugin-dependencies-feature/
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.1.1
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
