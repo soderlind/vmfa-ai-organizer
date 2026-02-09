@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\AI;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Anthropic Claude-based folder suggestion provider.
  */

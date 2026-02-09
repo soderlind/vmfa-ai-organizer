@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\REST;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\Services\AIAnalysisService;
 use VmfaAiOrganizer\Services\BackupService;
 use VmfaAiOrganizer\Services\MediaScannerService;

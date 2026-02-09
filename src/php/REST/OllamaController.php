@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\REST;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * REST controller for Ollama model listing.
  */

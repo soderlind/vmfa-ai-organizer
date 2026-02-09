@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\AI\ProviderFactory;
 use VmfaAiOrganizer\Plugin;
 
@@ -345,6 +347,32 @@ class SettingsPage {
 			'vmfa-ai-organizer-admin',
 			'vmfa-ai-organizer',
 			VMFA_AI_ORGANIZER_PATH . 'languages'
+		);
+
+		// Enqueue provider refresh script for Ollama/Exo model selection.
+		wp_enqueue_script(
+			'vmfa-provider-refresh',
+			VMFA_AI_ORGANIZER_URL . 'src/js/settings-provider-refresh.js',
+			array(),
+			VMFA_AI_ORGANIZER_VERSION,
+			array( 'in_footer' => true )
+		);
+
+		wp_add_inline_script(
+			'vmfa-provider-refresh',
+			'var vmfaProviderConfig = ' . wp_json_encode( array(
+				'nonce'          => wp_create_nonce( 'wp_rest' ),
+				'ollamaModelsUrl' => rest_url( 'vmfa/v1/ollama-models' ),
+				'exoHealthUrl'   => rest_url( 'vmfa/v1/exo-health' ),
+				'exoModelsUrl'   => rest_url( 'vmfa/v1/exo-models' ),
+				'i18n'           => array(
+					'enterOllamaUrl' => __( 'Please enter the Ollama URL first.', 'vmfa-ai-organizer' ),
+					'enterExoUrl'    => __( 'Please enter the Exo endpoint first.', 'vmfa-ai-organizer' ),
+					'noModels'       => __( '— No models available —', 'vmfa-ai-organizer' ),
+					'fetchFailed'    => __( 'Failed to fetch models:', 'vmfa-ai-organizer' ),
+				),
+			) ) . ';',
+			'before'
 		);
 	}
 
@@ -973,70 +1001,12 @@ class SettingsPage {
 	/**
 	 * Render Ollama-specific JavaScript for model refresh.
 	 *
+	 * Scripts are now loaded via an enqueued external file (settings-provider-refresh.js).
+	 *
 	 * @return void
 	 */
 	private function render_ollama_scripts(): void {
-		?>
-		<script>
-			(function() {
-				const ollamaUrlField = document.getElementById('vmfa_ollama_url');
-				const ollamaModelField = document.getElementById('vmfa_ollama_model');
-				const ollamaRefreshBtn = document.getElementById('vmfa-ollama-refresh-models');
-
-				async function refreshOllamaModels() {
-					const endpoint = ollamaUrlField ? ollamaUrlField.value.trim() : '';
-					if (!endpoint) {
-						alert('<?php echo esc_js( __( 'Please enter the Ollama URL first.', 'vmfa-ai-organizer' ) ); ?>');
-						return;
-					}
-
-					if (ollamaRefreshBtn) ollamaRefreshBtn.disabled = true;
-
-					try {
-						const response = await fetch('<?php echo esc_url( rest_url( 'vmfa/v1/ollama-models' ) ); ?>', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								'X-WP-Nonce': '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>'
-							},
-							body: JSON.stringify({ endpoint: endpoint })
-						});
-						const data = await response.json();
-
-						if (data.models && Array.isArray(data.models) && ollamaModelField) {
-							const currentValue = ollamaModelField.value;
-							ollamaModelField.innerHTML = '';
-
-							if (data.models.length === 0) {
-								const opt = document.createElement('option');
-								opt.value = '';
-								opt.textContent = '<?php echo esc_js( __( '— No models available —', 'vmfa-ai-organizer' ) ); ?>';
-								ollamaModelField.appendChild(opt);
-							} else {
-								data.models.forEach(model => {
-									const opt = document.createElement('option');
-									opt.value = model.id || model;
-									opt.textContent = model.name || model.id || model;
-									if (opt.value === currentValue) opt.selected = true;
-									ollamaModelField.appendChild(opt);
-								});
-							}
-						} else if (data.error) {
-							alert('<?php echo esc_js( __( 'Failed to fetch models:', 'vmfa-ai-organizer' ) ); ?> ' + data.error);
-						}
-					} catch (e) {
-						alert('<?php echo esc_js( __( 'Failed to fetch models:', 'vmfa-ai-organizer' ) ); ?> ' + e.message);
-					} finally {
-						if (ollamaRefreshBtn) ollamaRefreshBtn.disabled = false;
-					}
-				}
-
-				if (ollamaRefreshBtn) {
-					ollamaRefreshBtn.addEventListener('click', refreshOllamaModels);
-				}
-			})();
-		</script>
-		<?php
+		// Handled by enqueued src/js/settings-provider-refresh.js.
 	}
 
 	/**
@@ -1073,108 +1043,12 @@ class SettingsPage {
 	/**
 	 * Render Exo-specific JavaScript for health check and model refresh.
 	 *
+	 * Scripts are now loaded via an enqueued external file (settings-provider-refresh.js).
+	 *
 	 * @return void
 	 */
 	private function render_exo_scripts(): void {
-		?>
-		<script>
-			(function() {
-				const exoEndpointField = document.getElementById('vmfa_exo_endpoint');
-				const exoModelField = document.getElementById('vmfa_exo_model');
-				const exoHealthIndicator = document.getElementById('vmfa-exo-health-indicator');
-				const exoCheckBtn = document.getElementById('vmfa-exo-check-connection');
-				const exoRefreshBtn = document.getElementById('vmfa-exo-refresh-models');
-
-				async function checkExoHealth() {
-					const endpoint = exoEndpointField ? exoEndpointField.value.trim() : '';
-					if (!endpoint) {
-						if (exoHealthIndicator) exoHealthIndicator.textContent = '';
-						return;
-					}
-
-					if (exoHealthIndicator) exoHealthIndicator.textContent = '⏳';
-
-					try {
-						const response = await fetch('<?php echo esc_url( rest_url( 'vmfa/v1/exo-health' ) ); ?>', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								'X-WP-Nonce': '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>'
-							},
-							body: JSON.stringify({ endpoint: endpoint })
-						});
-						const data = await response.json();
-						if (exoHealthIndicator) {
-							exoHealthIndicator.textContent = data.status === 'ok' ? '✅' : '❌';
-							exoHealthIndicator.title = data.status === 'ok' ? 'Connected' : (data.message || 'Connection failed');
-						}
-					} catch (e) {
-						if (exoHealthIndicator) {
-							exoHealthIndicator.textContent = '❌';
-							exoHealthIndicator.title = 'Connection failed: ' + e.message;
-						}
-					}
-				}
-
-				async function refreshExoModels() {
-					const endpoint = exoEndpointField ? exoEndpointField.value.trim() : '';
-					if (!endpoint) {
-						alert('<?php echo esc_js( __( 'Please enter the Exo endpoint first.', 'vmfa-ai-organizer' ) ); ?>');
-						return;
-					}
-
-					if (exoRefreshBtn) exoRefreshBtn.disabled = true;
-
-					try {
-						const response = await fetch('<?php echo esc_url( rest_url( 'vmfa/v1/exo-models' ) ); ?>', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								'X-WP-Nonce': '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>'
-							},
-							body: JSON.stringify({ endpoint: endpoint })
-						});
-						const data = await response.json();
-
-						if (data.models && Array.isArray(data.models) && exoModelField) {
-							const currentValue = exoModelField.value;
-							exoModelField.innerHTML = '';
-
-							if (data.models.length === 0) {
-								const opt = document.createElement('option');
-								opt.value = '';
-								opt.textContent = '<?php echo esc_js( __( '— No models available —', 'vmfa-ai-organizer' ) ); ?>';
-								exoModelField.appendChild(opt);
-							} else {
-								data.models.forEach(model => {
-									const opt = document.createElement('option');
-									opt.value = model.id || model;
-									opt.textContent = model.name || model.id || model;
-									if (opt.value === currentValue) opt.selected = true;
-									exoModelField.appendChild(opt);
-								});
-							}
-
-							checkExoHealth();
-						} else if (data.error) {
-							alert('<?php echo esc_js( __( 'Failed to fetch models:', 'vmfa-ai-organizer' ) ); ?> ' + data.error);
-						}
-					} catch (e) {
-						alert('<?php echo esc_js( __( 'Failed to fetch models:', 'vmfa-ai-organizer' ) ); ?> ' + e.message);
-					} finally {
-						if (exoRefreshBtn) exoRefreshBtn.disabled = false;
-					}
-				}
-
-				if (exoCheckBtn) {
-					exoCheckBtn.addEventListener('click', checkExoHealth);
-				}
-				if (exoRefreshBtn) {
-					exoRefreshBtn.addEventListener('click', refreshExoModels);
-				}
-			})();
-		</script>
-		<?php
+		// Handled by enqueued src/js/settings-provider-refresh.js.
 	}
 
 	/**

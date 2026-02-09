@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\REST;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * REST controller for Exo health check and model listing.
  */

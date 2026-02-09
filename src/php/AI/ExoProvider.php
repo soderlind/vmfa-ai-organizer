@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\AI;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Exo-based folder suggestion provider for distributed local LLM inference.
  */

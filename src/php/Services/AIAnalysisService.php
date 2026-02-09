@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\Services;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\AI\ProviderFactory;
 use VmfaAiOrganizer\AI\ProviderInterface;
 use VmfaAiOrganizer\Plugin;

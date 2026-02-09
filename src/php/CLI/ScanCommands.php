@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace VmfaAiOrganizer\CLI;
 
+defined( 'ABSPATH' ) || exit;
+
 use VmfaAiOrganizer\Services\MediaScannerService;
 use WP_CLI;
 use WP_CLI\Utils;
