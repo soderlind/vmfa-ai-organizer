@@ -52,7 +52,7 @@ class WordPressAIProvider extends AbstractProvider {
 
 		try {
 			return wp_ai_client_prompt( 'test' )->is_supported_for_text_generation();
-		} catch ( \Exception $e ) {
+		} catch (\Exception $e) {
 			return false;
 		}
 	}
@@ -109,7 +109,7 @@ class WordPressAIProvider extends AbstractProvider {
 			// Attach image if available.
 			if ( $image_data ) {
 				$image_string = $this->format_image_data( $image_data );
-				$mime_type    = $image_data['mime_type'] ?? null;
+				$mime_type    = $image_data[ 'mime_type' ] ?? null;
 				$builder      = $builder->with_file( $image_string, $mime_type );
 			}
 
@@ -130,7 +130,7 @@ class WordPressAIProvider extends AbstractProvider {
 			}
 
 			return $this->parse_response( $result, $folder_paths );
-		} catch ( \Exception $e ) {
+		} catch (\Exception $e) {
 			return array(
 				'action'          => 'skip',
 				'folder_id'       => null,
@@ -154,11 +154,11 @@ class WordPressAIProvider extends AbstractProvider {
 	 * @return string Data URI or URL string.
 	 */
 	private function format_image_data( array $image_data ): string {
-		if ( ! empty( $image_data['base64'] ) && ! empty( $image_data['mime_type'] ) ) {
-			return 'data:' . $image_data['mime_type'] . ';base64,' . $image_data['base64'];
+		if ( ! empty( $image_data[ 'base64' ] ) && ! empty( $image_data[ 'mime_type' ] ) ) {
+			return 'data:' . $image_data[ 'mime_type' ] . ';base64,' . $image_data[ 'base64' ];
 		}
 
-		return $image_data['url'] ?? '';
+		return $image_data[ 'url' ] ?? '';
 	}
 
 	/**
@@ -187,7 +187,7 @@ class WordPressAIProvider extends AbstractProvider {
 			}
 
 			return null;
-		} catch ( \Exception $e ) {
+		} catch (\Exception $e) {
 			return $e->getMessage();
 		}
 	}

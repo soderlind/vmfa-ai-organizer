@@ -53,7 +53,7 @@ class ProviderFactory {
 
 		// Add WordPress AI provider first when available.
 		if ( self::is_wp_ai_available() ) {
-			$all_providers['wordpress'] = WordPressAIProvider::class;
+			$all_providers[ 'wordpress' ] = WordPressAIProvider::class;
 		}
 
 		// Add all third-party providers.
