@@ -7,6 +7,7 @@ This guide explains how to configure and choose the right AI provider for the Vi
 - [Overview](#overview)
 - [Choosing a Model](#choosing-a-model)
 - [Provider Setup](#provider-setup)
+  - [WordPress AI (Recommended)](#wordpress-ai-recommended)
   - [OpenAI](#openai)
   - [Azure OpenAI](#azure-openai)
   - [Anthropic Claude](#anthropic-claude)
@@ -26,6 +27,7 @@ This plugin uses **vision-capable AI models** to analyze actual image content. T
 
 | Provider | Type | Best For |
 |----------|------|----------|
+| **WordPress AI** | Core | WP 7.0+, centralized connector config |
 | **OpenAI** | Cloud | General use, easiest setup |
 | **Azure OpenAI** | Cloud | Enterprise, data residency, compliance |
 | **Anthropic** | Cloud | Nuanced understanding, detailed analysis |
@@ -98,6 +100,41 @@ Model offerings change frequently. Always check your provider's official documen
 ---
 
 ## Provider Setup
+
+### WordPress AI (Recommended)
+
+**Available in WordPress 7.0+**
+
+WordPress 7.0 introduced a built-in AI Client that centralizes AI connector configuration. This is the recommended option when available because:
+
+- **Centralized configuration**: Configure AI connectors once in WordPress settings, use across all plugins
+- **No duplicate API keys**: Don't store API keys in multiple plugins
+- **Core integration**: Uses WordPress's maintained AI infrastructure
+- **Easy switching**: Change AI providers without updating individual plugins
+
+#### Requirements
+
+- WordPress 7.0 or later
+- At least one AI connector configured in **Settings → Connectors**
+
+#### Configuration
+
+1. Go to **Settings → Connectors** (`wp-admin/options-general.php?page=connectors-wp-admin`)
+2. Add an AI connector (OpenAI, Anthropic, Azure, etc.)
+3. Configure your API credentials in the Connectors settings
+4. In **Media → AI Organizer → AI Provider**:
+   - Set **AI Provider** to "WordPress AI (Core)"
+   - That's it! The connector handles the rest
+
+#### Checking Availability
+
+The "WordPress AI (Core)" option only appears when:
+- WordPress 7.0+ is detected (the `wp_ai_client_prompt()` function is available)
+- At least one AI connector is configured in **Settings → Connectors**
+
+If you don't see this option, either you're on an older WordPress version or no connectors have been configured yet. Use one of the providers below as an alternative.
+
+---
 
 ### OpenAI
 

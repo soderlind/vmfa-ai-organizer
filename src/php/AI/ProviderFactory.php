@@ -19,7 +19,9 @@ use VmfaAiOrganizer\Plugin;
 class ProviderFactory {
 
 	/**
-	 * Available providers.
+	 * Available providers (third-party).
+	 *
+	 * WordPress AI provider is dynamically added when WP 7.0+ AI Client is available.
 	 *
 	 * @var array<string, class-string<ProviderInterface>>
 	 */
@@ -31,6 +33,36 @@ class ProviderFactory {
 		'grok'      => GrokProvider::class,
 		'exo'       => ExoProvider::class,
 	);
+
+	/**
+	 * Check if WordPress AI Client is available (WP 7.0+).
+	 *
+	 * @return bool
+	 */
+	public static function is_wp_ai_available(): bool {
+		return WordPressAIProvider::is_available();
+	}
+
+	/**
+	 * Get all providers including WordPress AI when available.
+	 *
+	 * @return array<string, class-string<ProviderInterface>>
+	 */
+	private static function get_all_providers(): array {
+		$all_providers = array();
+
+		// Add WordPress AI provider first when available.
+		if ( self::is_wp_ai_available() ) {
+			$all_providers[ 'wordpress' ] = WordPressAIProvider::class;
+		}
+
+		// Add all third-party providers.
+		foreach ( self::$providers as $name => $class ) {
+			$all_providers[ $name ] = $class;
+		}
+
+		return $all_providers;
+	}
 
 	/**
 	 * Get the currently configured provider.
@@ -48,7 +80,8 @@ class ProviderFactory {
 			$provider_name = Plugin::get_instance()->get_setting( 'ai_provider', '' );
 		}
 
-		if ( empty( $provider_name ) || ! isset( self::$providers[ $provider_name ] ) ) {
+		$all_providers = self::get_all_providers();
+		if ( empty( $provider_name ) || ! isset( $all_providers[ $provider_name ] ) ) {
 			return null;
 		}
 		return self::get_provider( $provider_name );
@@ -61,10 +94,11 @@ class ProviderFactory {
 	 * @return ProviderInterface|null
 	 */
 	public static function get_provider( string $name ): ?ProviderInterface {
-		if ( ! isset( self::$providers[ $name ] ) ) {
+		$all_providers = self::get_all_providers();
+		if ( ! isset( $all_providers[ $name ] ) ) {
 			return null;
 		}
-		$class = self::$providers[ $name ];
+		$class = $all_providers[ $name ];
 		return new $class();
 	}
 
@@ -74,9 +108,10 @@ class ProviderFactory {
 	 * @return array<string, string> Provider name => Display label.
 	 */
 	public static function get_available_providers(): array {
-		$providers = array();
+		$providers     = array();
+		$all_providers = self::get_all_providers();
 
-		foreach ( self::$providers as $name => $class ) {
+		foreach ( $all_providers as $name => $class ) {
 			$instance           = new $class();
 			$providers[ $name ] = $instance->get_label();
 		}
@@ -91,7 +126,8 @@ class ProviderFactory {
 	 * @return bool
 	 */
 	public static function provider_exists( string $name ): bool {
-		return isset( self::$providers[ $name ] );
+		$all_providers = self::get_all_providers();
+		return isset( $all_providers[ $name ] );
 	}
 
 	/**

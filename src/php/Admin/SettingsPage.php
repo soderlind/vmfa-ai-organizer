@@ -703,6 +703,25 @@ class SettingsPage {
 			<?php esc_html_e( 'Configure the AI provider to use for analyzing and organizing media files.', 'vmfa-ai-organizer' ); ?>
 		</p>
 		<?php
+		// Show WordPress AI Client notice when available but not already selected.
+		$current_provider = $this->get_settings()['ai_provider'] ?? '';
+		if ( ProviderFactory::is_wp_ai_available() && 'wordpress' !== $current_provider ) :
+			$connectors_url = admin_url( 'options-general.php?page=connectors-wp-admin' );
+			?>
+			<div class="notice notice-info inline vmfa-wp-ai-notice" style="margin: 12px 0; padding: 12px;">
+				<p>
+					<strong><?php esc_html_e( 'WordPress AI Client detected!', 'vmfa-ai-organizer' ); ?></strong>
+					<?php
+					printf(
+						/* translators: %s: link to Connectors settings page */
+						esc_html__( 'You can use the built-in AI Client configured in %s instead of managing API keys here.', 'vmfa-ai-organizer' ),
+						'<a href="' . esc_url( $connectors_url ) . '">' . esc_html__( 'Settings → Connectors', 'vmfa-ai-organizer' ) . '</a>'
+					);
+					?>
+				</p>
+			</div>
+			<?php
+		endif;
 	}
 
 	/**
@@ -743,6 +762,22 @@ class SettingsPage {
 		</select>
 		<?php
 		$this->render_locked_badge( 'ai_provider' );
+
+		// Show Connectors link when WordPress provider is selected.
+		if ( 'wordpress' === $value && ProviderFactory::is_wp_ai_available() ) :
+			$connectors_url = admin_url( 'options-general.php?page=connectors-wp-admin' );
+			?>
+			<p class="description vmfa-wordpress-provider-info" style="margin-top: 8px;">
+				<?php
+				printf(
+					/* translators: %s: link to Connectors settings page */
+					esc_html__( 'Configure AI models in %s', 'vmfa-ai-organizer' ),
+					'<a href="' . esc_url( $connectors_url ) . '">' . esc_html__( 'Settings → Connectors', 'vmfa-ai-organizer' ) . '</a>'
+				);
+				?>
+			</p>
+			<?php
+		endif;
 	}
 
 	/**

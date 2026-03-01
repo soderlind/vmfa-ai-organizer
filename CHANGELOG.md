@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-01
+
+### Added
+
+- WordPress Core AI provider (WP 7.0+ AI Client) as first-class provider option
+- Connectors settings link shown when WordPress Core provider is selected
+- Dynamic provider registration: WordPress AI auto-appears when WP 7.0+ detected
+
+### Changed
+
+- Hide "WordPress AI Client detected" notice when WordPress Core is already selected
+- Tested up to WordPress 7.0
+
 ## [1.2.1] - 2026-02-13
 
 ### Fixed
