@@ -3,8 +3,8 @@ Contributors: starter
 Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordpresss-plugin-dependencies-feature/
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
-Tested up to: 6.9
-Stable tag: 1.2.1
+Tested up to: 7.0
+Stable tag: 1.3.0
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,18 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.3.0 =
+* Added: WordPress Core AI provider (WP 7.0+ AI Client) as first-class provider option
+* Added: Connectors settings link shown when WordPress Core provider is selected
+* Added: Dynamic provider registration — WordPress AI auto-appears when WP 7.0+ detected
+* Changed: Hide "WordPress AI Client detected" notice when WordPress Core is already selected
+* Changed: Tested up to WordPress 7.0
+
+= 1.2.1 =
+* Fixed: Added Node.js build step to GitHub Actions release workflows
+* Fixed: Added `build/` to `.gitignore`
+* Fixed: Use `--optimize-autoloader` for Composer in CI
 
 = 1.2.0 =
 * Changed: Replaced inline plugin updater with shared `class-github-updater.php`
