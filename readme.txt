@@ -22,8 +22,7 @@ Unlike traditional media organizers that rely only on metadata, this plugin actu
 
 * **Vision-Based AI Analysis** – Analyzes actual image content (objects, scenes, people, colors) - not just filenames
 * **Multiple AI Providers** – Choose from OpenAI, Azure OpenAI, Anthropic Claude, Google Gemini, Ollama, Grok, Exo.
-  * **v1.3.0** adds support for WordPress 7.0+ with the new `wp.ai` abstraction 
-* **Azure OpenAI Support** – Full support for enterprise Azure-hosted OpenAI deployments
+  * v1.3.0 adds support for **WordPress Core AI provider** (WP 7.0+ AI Client) as a first-class provider option. Seamlessly integrates any AI provider registered with the WordPress AI Client, with automatic detection and configuration links.
 * **Three Scan Modes**:
   * Organize Unassigned – Only process media not already in a folder
   * Re-analyze All – Re-analyze all media and update assignments

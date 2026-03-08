@@ -6,9 +6,8 @@ AI-powered media organization add-on for the [Virtual Media Folders](https://wor
 
 - **Vision-Based AI Analysis**: Analyzes actual image content (objects, scenes, colors) - not just metadata
 - **Multiple AI Providers**: OpenAI/Azure, Anthropic Claude, Google Gemini, Ollama, Grok, Exo
-    - **v1.3.0** adds support for WordPress 7.0+ with the new `wp.ai` abstraction layer for seamless integration of any AI provider
+  - v1.3.0 adds support for **WordPress Core AI provider** (WP 7.0+ AI Client) as a first-class provider option. Seamlessly integrates any AI provider registered with the WordPress AI Client, with automatic detection and configuration links.
   - Tested with the providers I have access to: Azure OpenAI (gpt-4.1) and Ollama (llama3.2-vision:latest)
-- **Azure OpenAI Support**: Full support for Azure-hosted OpenAI deployments
 - **Automatic File Handling**: Documents go to "Documents", videos go to "Videos" - no AI needed
 - **Three Scan Modes**:
   - **Organize Unassigned**: Only process media not already in a folder
