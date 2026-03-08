@@ -5,8 +5,8 @@
 	"author": "Per Soderlind",
 	"license": "GPL-2.0-or-later",
 	"scripts": {
-		"build": "wp-scripts build src/js/index.js --output-path=build",
-		"start": "wp-scripts start src/js/index.js --output-path=build",
+		"build": "wp-scripts build src/js/index.js src/js/wp7-compat.js --output-path=build",
+		"start": "wp-scripts start src/js/index.js src/js/wp7-compat.js --output-path=build",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:run": "vitest run",

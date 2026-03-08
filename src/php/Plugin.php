@@ -248,6 +248,21 @@ final class Plugin {
 			'vmfa-ai-organizer',
 			VMFA_AI_ORGANIZER_PATH . 'languages'
 		);
+
+		// WP 7+ design-token overrides.
+		if ( function_exists( 'vmfo_is_wp7' ) && vmfo_is_wp7() ) {
+			$wp7_asset_file = VMFA_AI_ORGANIZER_PATH . 'build/wp7-compat.asset.php';
+			$wp7_version    = file_exists( $wp7_asset_file )
+				? ( include $wp7_asset_file )['version'] ?? VMFA_AI_ORGANIZER_VERSION
+				: VMFA_AI_ORGANIZER_VERSION;
+
+			wp_enqueue_style(
+				'vmfa-ai-organizer-wp7',
+				VMFA_AI_ORGANIZER_URL . 'build/wp7-compat.css',
+				[ 'vmfa-ai-organizer-admin', 'wp-base-styles' ],
+				$wp7_version
+			);
+		}
 	}
 
 	/**

@@ -1,0 +1,78 @@
+/**
+ * WP 7.0+ admin compatibility overrides for AI Organizer.
+ *
+ * Loaded only on WordPress 7.0+ to align with the "Modern" default color
+ * scheme and the new design tokens.
+ *
+ * @since 1.3.0
+ * @package VmfaAiOrganizer
+ */
+
+/* ==========================================================================
+   Theme color: use CSS custom properties from wp-base-styles
+   ========================================================================== */
+
+/* Progress bar */
+.vmfa-scan-progress .vmfa-progress-bar {
+	background: var(--wp-admin-theme-color);
+}
+
+/* Badge info */
+.vmfa-scan-progress .vmfa-badge-info {
+	color: var(--wp-admin-theme-color);
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.1);
+}
+
+/* Expanded result item */
+.vmfa-scan-progress .vmfa-result-item.is-expanded {
+	border-color: var(--wp-admin-theme-color);
+}
+
+/* Result header focus */
+.vmfa-scan-progress .vmfa-result-header:focus {
+	outline-color: var(--wp-admin-theme-color);
+}
+
+/* Preview folder badge */
+.vmfa-preview-modal .vmfa-confidence-high {
+	color: #00a32a;
+}
+
+/* ==========================================================================
+   Design-token alignment: backgrounds & borders
+   ========================================================================== */
+
+/* Stat item dividers */
+.vmfa-stat-item {
+	border-right-color: #ddd;
+}
+
+/* Scan action divider */
+.vmfa-scan-controls .vmfa-scan-actions {
+	border-top-color: #ddd;
+}
+
+/* Result item borders */
+.vmfa-scan-progress .vmfa-result-item {
+	border-color: #ddd;
+}
+
+/* Preview modal actions */
+.vmfa-preview-modal .vmfa-preview-actions {
+	border-top-color: #ddd;
+}
+
+/* Preview section dividers */
+.vmfa-preview-modal .vmfa-preview-section {
+	border-top-color: #ddd;
+}
+
+/* Recent results divider */
+.vmfa-scan-progress .vmfa-recent-results {
+	border-top-color: #ddd;
+}
+
+/* Result hover background */
+.vmfa-scan-progress .vmfa-result-header:hover {
+	background: #f0f0f0;
+}
