@@ -21,7 +21,8 @@ Unlike traditional media organizers that rely only on metadata, this plugin actu
 = Key Features =
 
 * **Vision-Based AI Analysis** – Analyzes actual image content (objects, scenes, people, colors) - not just filenames
-* **Multiple AI Providers** – Choose from OpenAI, Azure OpenAI, Anthropic Claude, Google Gemini, Ollama, Grok, Exo, or a free heuristic fallback
+* **Multiple AI Providers** – Choose from OpenAI, Azure OpenAI, Anthropic Claude, Google Gemini, Ollama, Grok, Exo.
+  * **v1.3.0** adds support for WordPress 7.0+ with the new `wp.ai` abstraction 
 * **Azure OpenAI Support** – Full support for enterprise Azure-hosted OpenAI deployments
 * **Three Scan Modes**:
   * Organize Unassigned – Only process media not already in a folder
