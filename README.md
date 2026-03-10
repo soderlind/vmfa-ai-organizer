@@ -6,7 +6,7 @@ AI-powered media organization add-on for the [Virtual Media Folders](https://wor
 
 - **Vision-Based AI Analysis**: Analyzes actual image content (objects, scenes, colors) - not just metadata
 - **Multiple AI Providers**: OpenAI/Azure, Anthropic Claude, Google Gemini, Ollama, Grok, Exo
-  - v1.3.0 adds support for **WordPress Core AI provider** (WP 7.0+ AI Client) as a first-class provider option. Seamlessly integrates any AI provider registered with the WordPress AI Client, with automatic detection and configuration links.
+  - v1.3.0 adds support for **WordPress Core AI provider** (WP 7.0+ AI Client) as a first-class provider option. Seamlessly integrates any AI provider registered with the WordPress AI Client, with automatic detection and configuration links. For example, install [AI Provider for Azure OpenAI](https://github.com/soderlind/ai-provider-for-azure-openai) to use Azure-hosted models via the Connectors page.
   - Tested with the providers I have access to: Azure OpenAI (gpt-4.1) and Ollama (llama3.2-vision:latest)
 - **Automatic File Handling**: Documents go to "Documents", videos go to "Videos" - no AI needed
 - **Three Scan Modes**:
@@ -75,7 +75,13 @@ Settings are resolved in this order:
 
 ```php
 // Provider Selection
+// Options: 'wordpress', 'openai', 'anthropic', 'gemini', 'ollama', 'grok', 'exo'
 define( 'VMFA_AI_PROVIDER', 'openai' );
+
+// WordPress AI (Core) — WP 7.0+ recommended
+// No API key constants needed. Configure your connector in Settings → Connectors.
+// Example: install AI Provider for Azure OpenAI, then set:
+// define( 'VMFA_AI_PROVIDER', 'wordpress' );
 
 // OpenAI / Azure OpenAI
 define( 'VMFA_AI_OPENAI_TYPE', 'openai' ); // 'openai' or 'azure'

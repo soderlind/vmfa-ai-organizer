@@ -120,7 +120,7 @@ WordPress 7.0 introduced a built-in AI Client that centralizes AI connector conf
 #### Configuration
 
 1. Go to **Settings → Connectors** (`wp-admin/options-general.php?page=connectors-wp-admin`)
-2. Add an AI connector (OpenAI, Anthropic, Azure, etc.)
+2. Add an AI connector — for example, install [AI Provider for Azure OpenAI](https://github.com/soderlind/ai-provider-for-azure-openai) for Azure-hosted models
 3. Configure your API credentials in the Connectors settings
 4. In **Media → AI Organizer → AI Provider**:
    - Set **AI Provider** to "WordPress AI (Core)"
@@ -174,15 +174,58 @@ define( 'VMFA_AI_OPENAI_MODEL', 'your-chosen-model' );
 
 Azure OpenAI is ideal for enterprises needing data residency, compliance, and Azure integration.
 
-#### Getting Started
+There are two ways to use Azure OpenAI with this plugin:
+
+1. **Via WordPress AI (Recommended on WP 7.0+)** — Install the [AI Provider for Azure OpenAI](https://github.com/soderlind/ai-provider-for-azure-openai) connector plugin and select "WordPress AI (Core)" as your provider.
+2. **Direct configuration** — Configure Azure credentials directly in the AI Organizer settings.
+
+#### Option 1: WordPress AI Connector (Recommended)
+
+This approach uses the WordPress 7.0+ AI Client so your Azure credentials are configured once and shared across all plugins.
+
+##### Prerequisites
+
+- WordPress 7.0 or later
+- An Azure subscription with an Azure OpenAI resource and a deployed vision-capable model
+
+##### Setup
+
+1. Download and install [AI Provider for Azure OpenAI](https://github.com/soderlind/ai-provider-for-azure-openai/releases/latest/download/ai-provider-for-azure-openai.zip) (`Plugins → Add New → Upload Plugin`)
+2. Go to **Settings → Connectors** and click **Set Up** next to Azure OpenAI
+3. Enter your **API Key** (from Azure Portal → Your OpenAI Resource → Keys and Endpoint)
+4. Enter your **Endpoint URL** (e.g., `https://your-resource.openai.azure.com`)
+5. Enter your **API Version**, **Deployment ID**, and select **Capabilities**
+6. Click **Save Settings**
+7. In **Media → AI Organizer → AI Provider**, set **AI Provider** to "WordPress AI (Core)"
+
+The connector supports text generation, image generation, embeddings, text-to-speech, and multimodal input (text, image, audio, document combinations).
+
+##### Environment Variables (Connector)
+
+The connector plugin also supports environment variables as fallbacks:
+
+```bash
+export AZURE_OPENAI_API_KEY="your-api-key"
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com"
+export AZURE_OPENAI_API_VERSION="2024-02-15-preview"    # Optional
+export AZURE_OPENAI_DEPLOYMENT_ID="gpt-4o"               # Optional
+export AZURE_OPENAI_CAPABILITIES="text_generation,chat_history"  # Optional, comma-separated
+```
+
+Available capabilities: `text_generation`, `image_generation`, `chat_history`, `embedding_generation`, `text_to_speech_conversion`.
+
+#### Option 2: Direct Configuration
+
+Use this approach on WordPress < 7.0 or if you prefer per-plugin credentials.
+
+##### Getting Started
 
 1. Have an Azure subscription
-2. Request access to Azure OpenAI Service
-3. Create an Azure OpenAI resource in Azure Portal
-4. Deploy a vision-capable model with a deployment name
-5. Note your endpoint URL and key
+2. Create an Azure OpenAI resource in Azure Portal
+3. Deploy a vision-capable model with a deployment name
+4. Note your endpoint URL and key
 
-#### Configuration (Admin UI)
+##### Configuration (Admin UI)
 
 In **Media → AI Organizer → AI Provider**:
 - Set **AI Provider** to "OpenAI"
@@ -191,7 +234,7 @@ In **Media → AI Organizer → AI Provider**:
 - Enter your **API Key**
 - Set **Model/Deployment** to your deployment name (not the model name)
 
-#### Configuration (wp-config.php)
+##### Configuration (wp-config.php)
 
 ```php
 define( 'VMFA_AI_PROVIDER', 'openai' );
@@ -204,9 +247,11 @@ define( 'VMFA_AI_AZURE_API_VERSION', '2024-02-15-preview' );
 
 #### Tips
 
+- On WP 7.0+, the connector approach is preferred — configure once, use everywhere
 - The **Model** field must be your **deployment name**, not the underlying model name
 - Use a recent API version for vision support (check Azure docs for current versions)
-- Deploy a vision-capable model in your Azure OpenAI resource
+- Deploy a vision-capable model (e.g., GPT-4o, GPT-4.1) in your Azure OpenAI resource
+- Azure OpenAI uses `api-key` header auth instead of `Authorization: Bearer` — the plugin handles this automatically
 
 ---
 
