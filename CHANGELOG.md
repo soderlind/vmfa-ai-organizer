@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-14
+
+### Changed
+
+- Refactored Plugin class to extend `VirtualMediaFolders\Addon\AbstractPlugin` base class
+- Replaced inline Action Scheduler loading with `ActionSchedulerLoader::maybe_load()`
+- Removed duplicated singleton boilerplate and textdomain loading
+
 ## [1.4.0] - 2026-03-10
 
 ### Added

@@ -11,6 +11,8 @@ namespace VmfaAiOrganizer;
 
 defined( 'ABSPATH' ) || exit;
 
+use VirtualMediaFolders\Addon\AbstractPlugin;
+use VirtualMediaFolders\Addon\ActionSchedulerLoader;
 use VmfaAiOrganizer\Admin\SettingsPage;
 use VmfaAiOrganizer\CLI\Commands;
 use VmfaAiOrganizer\REST\AnalysisController;
@@ -21,14 +23,7 @@ use VmfaAiOrganizer\Services\MediaScannerService;
 /**
  * Plugin bootstrap class.
  */
-final class Plugin {
-
-	/**
-	 * Singleton instance.
-	 *
-	 * @var Plugin|null
-	 */
-	private static ?Plugin $instance = null;
+final class Plugin extends AbstractPlugin {
 
 	/**
 	 * Settings page instance.
@@ -65,85 +60,27 @@ final class Plugin {
 	 */
 	private ?MediaScannerService $scanner_service = null;
 
-	/**
-	 * Private constructor to prevent direct instantiation.
-	 */
-	private function __construct() {}
-
-	/**
-	 * Get singleton instance.
-	 *
-	 * @return Plugin
-	 */
-	public static function get_instance(): Plugin {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
+	/** @inheritDoc */
+	protected function get_text_domain(): string {
+		return 'vmfa-ai-organizer';
 	}
 
-	/**
-	 * Initialize the plugin.
-	 *
-	 * @return void
-	 */
-	public function init(): void {
-		$this->init_services();
-		$this->init_hooks();
-		$this->init_cli();
-
-		// Load textdomain on init hook when locale is set.
-		add_action( 'init', array( $this, 'load_textdomain' ) );
+	/** @inheritDoc */
+	protected function get_plugin_file(): string {
+		return VMFA_AI_ORGANIZER_FILE;
 	}
 
 	/**
 	 * Ensure Action Scheduler is loaded.
 	 *
-	 * Depending on packaging, Action Scheduler may be present under vendor/ or woocommerce/.
-	 * This method is safe to call multiple times.
-	 *
 	 * @return bool True if Action Scheduler scheduling functions are available.
 	 */
 	public static function maybe_load_action_scheduler(): bool {
-		if ( function_exists( 'as_schedule_single_action' ) ) {
-			return true;
-		}
-
 		if ( ! defined( 'VMFA_AI_ORGANIZER_PATH' ) ) {
 			return false;
 		}
 
-		// If WordPress isn't loaded (e.g. some test contexts), don't try to boot Action Scheduler.
-		if ( ! function_exists( 'add_action' ) ) {
-			return false;
-		}
-
-		$paths = array(
-			VMFA_AI_ORGANIZER_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php',
-			VMFA_AI_ORGANIZER_PATH . 'woocommerce/action-scheduler/action-scheduler.php',
-		);
-
-		foreach ( $paths as $path ) {
-			if ( file_exists( $path ) ) {
-				require_once $path;
-				break;
-			}
-		}
-
-		return function_exists( 'as_schedule_single_action' );
-	}
-
-	/**
-	 * Load plugin text domain.
-	 *
-	 * @return void
-	 */
-	public function load_textdomain(): void {
-		load_plugin_textdomain(
-			'vmfa-ai-organizer',
-			false,
-			dirname( plugin_basename( VMFA_AI_ORGANIZER_FILE ) ) . '/languages'
-		);
+		return ActionSchedulerLoader::maybe_load( VMFA_AI_ORGANIZER_PATH );
 	}
 
 	/**
@@ -151,7 +88,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	private function init_services(): void {
+	protected function init_services(): void {
 		$this->settings_page     = new SettingsPage();
 		$this->rest_controller   = new AnalysisController();
 		$this->exo_controller    = new ExoController();
@@ -164,7 +101,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	private function init_hooks(): void {
+	protected function init_hooks(): void {
 		// Admin hooks.
 		if ( is_admin() ) {
 			$this->settings_page->init();
@@ -187,7 +124,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	private function init_cli(): void {
+	protected function init_cli(): void {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'vmfa-ai', Commands::class);
 			\WP_CLI::add_command( 'vmfa-ai scan', CLI\ScanCommands::class);

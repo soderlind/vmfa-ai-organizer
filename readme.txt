@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 7.0
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,11 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.5.0 =
+* Changed: Refactored Plugin class to extend VMF core `AbstractPlugin` base class
+* Changed: Replaced inline Action Scheduler loading with `ActionSchedulerLoader`
+* Changed: Removed duplicated singleton boilerplate and textdomain loading
 
 = 1.4.0 =
 * Added: WP 7.0+ design-token style overrides for scan progress, results, and preview modal
