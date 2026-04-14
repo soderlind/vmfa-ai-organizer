@@ -113,7 +113,7 @@ class WordPressAIProvider extends AbstractProvider {
 				$builder      = $builder->with_file( $image_string, $mime_type );
 			}
 
-			$result = $builder->generate_text();
+			$result = $builder->generate_text_result();
 
 			if ( is_wp_error( $result ) ) {
 				return array(
@@ -129,7 +129,36 @@ class WordPressAIProvider extends AbstractProvider {
 				);
 			}
 
-			return $this->parse_response( $result, $folder_paths );
+			// Extract text from the first candidate's first text part.
+			$candidates = $result->getCandidates();
+			$text       = '';
+			if ( ! empty( $candidates ) ) {
+				$parts = $candidates[0]->getMessage()->getParts();
+				foreach ( $parts as $part ) {
+					$part_text = $part->getText();
+					if ( null !== $part_text ) {
+						$text .= $part_text;
+					}
+				}
+			}
+
+			// Extract token usage from the result DTO.
+			$token_usage = array();
+			$usage       = $result->getTokenUsage();
+			if ( $usage ) {
+				$token_usage = array(
+					'prompt_tokens'     => $usage->getPromptTokens(),
+					'completion_tokens' => $usage->getCompletionTokens(),
+					'total_tokens'      => $usage->getTotalTokens(),
+				);
+			}
+
+			$parsed = $this->parse_response( $text, $folder_paths );
+			if ( ! empty( $token_usage ) ) {
+				$parsed['token_usage'] = $token_usage;
+			}
+
+			return $parsed;
 		} catch (\Exception $e) {
 			return array(
 				'action'          => 'skip',

@@ -129,7 +129,10 @@ class OpenAIProvider extends AbstractProvider {
 
 		$content = $response[ 'data' ][ 'choices' ][ 0 ][ 'message' ][ 'content' ] ?? '';
 
-		return $this->parse_response( $content, $folder_paths );
+		$result                = $this->parse_response( $content, $folder_paths );
+		$result['token_usage'] = $this->extract_token_usage( $response['data'] );
+
+		return $result;
 	}
 
 	// build_user_content() removed: now uses AbstractProvider::build_openai_compatible_user_content().

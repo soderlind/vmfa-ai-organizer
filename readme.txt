@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 7.0
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,17 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.6.0 =
+* Changed: Compressed system prompt from ~1,200 to ~500 tokens (~60% reduction per API call)
+* Changed: Trimmed user prompt with shorter format, session folders capped at 30
+* Changed: Compact folder list format for libraries with 30+ folders
+* Changed: Gemini provider now uses `systemInstruction` field instead of concatenating with user prompt
+* Added: AI result caching by image content hash — duplicate images skip API calls entirely
+* Added: Token usage tracking (prompt, completion, total) accumulated per scan
+* Added: Cache hit counter in scan progress
+* Added: Token usage extracted from all providers including WordPress AI (Core)
+* Added: WordPress AI provider uses `generate_text_result()` for full `GenerativeAiResult` DTO
 
 = 1.5.0 =
 * Changed: Refactored Plugin class to extend VMF core `AbstractPlugin` base class

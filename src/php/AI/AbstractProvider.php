@@ -43,96 +43,26 @@ abstract class AbstractProvider implements ProviderInterface {
 		$language_name = $this->get_language_name( $locale );
 
 		return <<<PROMPT
-You are a media organization assistant with vision capabilities. Your PRIMARY task is to ANALYZE THE IMAGE CONTENT to determine the most appropriate folder.
+You are a media organization assistant with vision capabilities. Analyze image content to choose the best folder.
 
-## LANGUAGE REQUIREMENT
-You MUST respond with folder names in {$language_name}. All folder_path values in your response must use {$language_name} words.
+Respond with folder names in {$language_name}. Use Title Case, 1-3 words per level, max 3 levels deep. No emojis.
 
-## Analysis Priority (highest to lowest):
-1. **IMAGE CONTENT**: What objects, scenes, people, activities, or subjects are visible?
-2. **EXIF/Metadata**: Camera info, date taken, GPS location, keywords
-3. **Text metadata**: Title, alt text, caption, description
-4. **Filename**: Only as a last resort hint
+Analysis priority: 1) image content, 2) EXIF/metadata, 3) text metadata, 4) filename.
 
-## CRITICAL: Folder Name Consistency
-You MUST avoid creating similar or synonymous folder names. Follow these rules strictly:
-- **ALWAYS check existing folders first** - if an existing folder covers the same concept, USE IT
-- **Use broad, canonical categories** - prefer common terms over niche variations
-- **NO synonyms** - if "Animals" exists, do NOT create "Wildlife", "Fauna", "Creatures", etc.
-- **NO near-duplicates** - if "Landscapes" exists, do NOT create "Scenery", "Views", "Vistas", etc.
-- **NO subset folders** - if "Insects" exists under "Animals", do NOT create "Bees", "Butterflies", "Ants" as separate folders - use the existing "Animals/Insects" instead
-- **Standardize naming** - use the most common, simple term for each category
+Folder rules:
+- Always reuse an existing or session-suggested folder when it fits.
+- No synonyms: if "Animals" exists, do not create "Wildlife" or "Fauna".
+- No subsets: if "Insects" exists, do not create "Bees"—use "Insects".
+- No hierarchy inversions: if "Events/Outdoor" exists, do not create "Outdoor/Events".
+- Prefer broad canonical names (Animals, Nature, People, Buildings, Food, Travel, Events, Art, Sports, Technology).
+- When uncertain, choose a broader category.
 
-### Subset/Superset Rule (CRITICAL):
-When a more specific term is a TYPE OF something that already has a folder, USE the broader existing folder:
-- Bees → use "Insects" (bees are insects)
-- Sparrows → use "Birds" (sparrows are birds)
-- Roses → use "Flowers" (roses are flowers)
-- Salmon → use "Fish" (salmon are fish)
-- Cake → use "Desserts" (cake is a dessert)
-Do NOT create new specific folders when a suitable broader category already exists.
+Respond with valid JSON only (no markdown):
+{"visual_description":"string|null","action":"existing|new|skip","folder_id":int|null,"folder_path":"string|null","new_folder_path":"string|null","confidence":0.0-1.0,"reason":"string"}
 
-### Standard Category Examples (use these exact names, not synonyms):
-- Animals (not: Wildlife, Fauna, Creatures, Pets)
-- Nature (not: Outdoors, Natural, Environment)
-- People (not: Humans, Persons, Portraits, Faces)
-- Buildings (not: Architecture, Structures, Constructions)
-- Food (not: Cuisine, Meals, Dishes)
-- Travel (not: Vacation, Tourism, Trips)
-- Events (not: Celebrations, Occasions, Gatherings)
-- Art (not: Artwork, Artistic, Creative)
-- Sports (not: Athletics, Games, Recreation)
-- Technology (not: Tech, Gadgets, Devices, Electronics)
-
-## Folder Creation Guidelines
-
-### When to REUSE an existing/suggested folder:
-- If a folder already exists that matches the image content, use it
-- Check the "Folders Already Suggested in This Session" list and reuse if applicable
-
-### When to CREATE a new folder:
-- If no existing folder fits the image content well
-- Create descriptive folders based on what you SEE in the image
-- Be specific enough to be useful, but general enough to group similar images
-
-### Folder Naming Rules:
-- Use Title Case in {$language_name}
-- Keep names concise: 1-3 words per level (prefer 1-2 when possible)
-- Spaces are allowed (e.g., "Street Art", "Birthday Party")
-- Create hierarchies when it makes sense (e.g., "Animals/Birds", "Food/Desserts")
-- Maximum 3 levels deep
-- NO emojis or emoticons in folder names (use plain text only)
-
-### Avoid These Mistakes:
-- Don't create synonymous folders (if "Animals" exists, don't create "Wildlife")
-- Don't create subset folders (if "Insects" exists, don't create "Bees" or "Butterflies" - use "Insects")
-- Don't invert existing hierarchies (if "Events/Outdoor" exists, don't create "Outdoor/Events")
-- Don't be overly specific (prefer "Food/Desserts" over "Food/Chocolate_Cake_With_Sprinkles")
-
-## Example Categories (use as inspiration, not restrictions):
-Animals, Nature, People, Buildings, Food, Travel, Events, Art, Sports, Technology, 
-Transportation, Water, Plants, Music, Fashion, Documents, Videos
-
-## Rules:
-- ALWAYS analyze what you SEE in the image first
-- Base your folder decision primarily on visual content
-- Use metadata only to supplement your visual analysis
-- When uncertain, choose a broader category
-
-Respond with valid JSON only. No markdown formatting, no code blocks:
-{
-	"visual_description": "Brief description of what is visible in the image" (REQUIRED when an image was analyzed, otherwise null),
-    "action": "existing" or "new" or "skip",
-	"folder_id": 123 (REQUIRED integer ID from the folder list when action is "existing", otherwise null),
-	"folder_path": "Exact/Folder/Path" (REQUIRED exact path from the folder list when action is "existing"; do NOT include the "(ID: ...)" suffix; otherwise null),
-	"new_folder_path": "Category" or "Category/Subcategory" (REQUIRED string when action is "new", otherwise null),
-    "confidence": 0.0 to 1.0,
-    "reason": "One brief sentence explaining the folder choice (max 20 words)"
-}
-
-CRITICAL: When action is "new", you MUST provide a non-empty new_folder_path value like "Plants" or "Nature/Leaves".
-CRITICAL: When action is "existing", you MUST provide BOTH folder_id AND folder_path copied from the Available Folders list.
-CRITICAL: If the Available Folders section says "No existing folders.", you MUST NOT use action "existing". Use "new" or "skip".
+action="existing": folder_id and folder_path are required (copy from Available Folders, omit "(ID: …)" suffix).
+action="new": new_folder_path is required.
+No existing folders listed → use "new" or "skip", never "existing".
 PROMPT;
 	}
 
@@ -230,6 +160,44 @@ PROMPT;
 	 */
 	protected function get_openai_json_response_format(): array {
 		return array( 'type' => 'json_object' );
+	}
+
+	/**
+	 * Extract token usage from a provider API response.
+	 *
+	 * Supports OpenAI-compatible (usage.prompt_tokens / usage.completion_tokens)
+	 * and Anthropic (usage.input_tokens / usage.output_tokens) formats.
+	 *
+	 * @param array<string, mixed>|null $response_data Decoded API response data.
+	 * @return array{prompt_tokens: int, completion_tokens: int, total_tokens: int}
+	 */
+	protected function extract_token_usage( ?array $response_data ): array {
+		$usage = array(
+			'prompt_tokens'     => 0,
+			'completion_tokens' => 0,
+			'total_tokens'      => 0,
+		);
+
+		if ( ! is_array( $response_data ) || ! isset( $response_data['usage'] ) ) {
+			return $usage;
+		}
+
+		$raw = $response_data['usage'];
+
+		// OpenAI / Grok / Exo format.
+		if ( isset( $raw['prompt_tokens'] ) ) {
+			$usage['prompt_tokens']     = (int) $raw['prompt_tokens'];
+			$usage['completion_tokens'] = (int) ( $raw['completion_tokens'] ?? 0 );
+		}
+		// Anthropic format.
+		elseif ( isset( $raw['input_tokens'] ) ) {
+			$usage['prompt_tokens']     = (int) $raw['input_tokens'];
+			$usage['completion_tokens'] = (int) ( $raw['output_tokens'] ?? 0 );
+		}
+
+		$usage['total_tokens'] = $usage['prompt_tokens'] + $usage['completion_tokens'];
+
+		return $usage;
 	}
 
 	/**
@@ -351,6 +319,11 @@ PROMPT;
 	 * @param array<string>        $suggested_folders  Folders already suggested in this session.
 	 * @return string
 	 */
+	/**
+	 * Maximum session-suggested folders to include in the user prompt.
+	 */
+	private const MAX_SUGGESTED_FOLDERS_IN_PROMPT = 30;
+
 	protected function build_user_prompt(
 		array $media_metadata,
 		array $folder_paths,
@@ -360,48 +333,63 @@ PROMPT;
 	): string {
 		$folders_list = empty( $folder_paths )
 			? 'No existing folders.'
-			: implode( "\n", array_map( fn( $path, $id ) => "- {$path} (ID: {$id})", array_keys( $folder_paths ), $folder_paths ) );
-
-		$no_folders_note = empty( $folder_paths )
-			? "\nIMPORTANT: There are no existing folders listed. You MUST use action \"new\" (or \"skip\" if truly uncategorizable).\n"
-			: '';
+			: $this->format_folder_list( $folder_paths );
 
 		$metadata_text = $this->format_metadata( $media_metadata );
 
-		$new_folders_text = $allow_new_folders
-			? "You MAY suggest creating a new folder (max depth: {$max_depth})."
-			: 'You must ONLY use existing folders. Do not suggest new folders.';
+		$constraints = $allow_new_folders
+			? "May create new folders (max depth: {$max_depth})."
+			: 'Use existing folders only.';
 
-		// Add session suggested folders section.
+		if ( empty( $folder_paths ) ) {
+			$constraints .= ' No existing folders—use "new" or "skip".';
+		}
+
+		// Cap session suggested folders to avoid unbounded prompt growth.
 		$suggested_folders_text = '';
 		if ( ! empty( $suggested_folders ) ) {
-			$suggested_list         = implode( "\n", array_map( fn( $path ) => "- {$path}", $suggested_folders ) );
-			$suggested_folders_text = <<<TEXT
-
-## Folders Already Suggested in This Session (MUST REUSE if applicable)
-The following folders have already been suggested during this scan. You MUST use one of these if the media fits the same category. Do NOT create a similar or synonymous folder.
-{$suggested_list}
-TEXT;
+			$capped = array_slice( $suggested_folders, -self::MAX_SUGGESTED_FOLDERS_IN_PROMPT );
+			$suggested_list         = implode( ', ', $capped );
+			$suggested_folders_text = "\nSession folders (reuse if applicable): {$suggested_list}";
 		}
 
 		return <<<PROMPT
-Analyze this media file and suggest a folder.
+Suggest a folder for this media. Describe the image first if provided.
 
-## IMPORTANT: If an image is provided, FIRST describe what you SEE in it.
+Metadata: {$metadata_text}
 
-## Media Metadata (use as supplementary context)
-{$metadata_text}
+Folders:
+{$folders_list}{$suggested_folders_text}
 
-## Available Folders
-{$folders_list}
-{$suggested_folders_text}
-{$no_folders_note}
-
-## Constraints
-{$new_folders_text}
-
-Respond with JSON only. Include "visual_description" if you analyzed an image.
+{$constraints}
 PROMPT;
+	}
+
+	/**
+	 * Format the folder list for the user prompt.
+	 *
+	 * Uses a compact format for large folder trees (>30 folders) to reduce tokens.
+	 *
+	 * @param array<string, int> $folder_paths Folder paths mapped to IDs.
+	 * @return string Formatted folder list.
+	 */
+	protected function format_folder_list( array $folder_paths ): string {
+		$count = count( $folder_paths );
+
+		if ( $count <= 30 ) {
+			return implode( "\n", array_map(
+				fn( $path, $id ) => "- {$path} (ID: {$id})",
+				array_keys( $folder_paths ),
+				$folder_paths
+			) );
+		}
+
+		// Compact format for large trees: "Path[ID]" one per line.
+		return implode( "\n", array_map(
+			fn( $path, $id ) => "{$path}[{$id}]",
+			array_keys( $folder_paths ),
+			$folder_paths
+		) );
 	}
 
 	/**

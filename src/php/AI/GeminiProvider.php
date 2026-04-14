@@ -60,16 +60,20 @@ class GeminiProvider extends AbstractProvider {
 		$model   = $this->get_setting( 'gemini_model' ) ?: 'gemini-1.5-flash';
 
 		$user_prompt = $this->build_user_prompt( $media_metadata, $folder_paths, $max_depth, $allow_new_folders, $suggested_folders );
-		$full_prompt = $this->get_system_prompt() . "\n\n" . $user_prompt;
 
 		$url = sprintf( '%s/%s:generateContent?key=%s', self::API_BASE_URL, $model, $api_key );
 
 		// Build parts array - with or without image.
-		$parts = $this->build_gemini_parts( $full_prompt, $image_data );
+		$parts = $this->build_gemini_parts( $user_prompt, $image_data );
 
 		$response = $this->make_request(
 			$url,
 			array(
+				'systemInstruction' => array(
+					'parts' => array(
+						array( 'text' => $this->get_system_prompt() ),
+					),
+				),
 				'contents'         => array(
 					array(
 						'parts' => $parts,
@@ -99,7 +103,17 @@ class GeminiProvider extends AbstractProvider {
 
 		$content = $response[ 'data' ][ 'candidates' ][ 0 ][ 'content' ][ 'parts' ][ 0 ][ 'text' ] ?? '';
 
-		return $this->parse_response( $content, $folder_paths );
+		$result = $this->parse_response( $content, $folder_paths );
+
+		// Gemini returns usageMetadata instead of usage.
+		$gemini_usage = $response['data']['usageMetadata'] ?? array();
+		$result['token_usage'] = array(
+			'prompt_tokens'     => (int) ( $gemini_usage['promptTokenCount'] ?? 0 ),
+			'completion_tokens' => (int) ( $gemini_usage['candidatesTokenCount'] ?? 0 ),
+			'total_tokens'      => (int) ( $gemini_usage['totalTokenCount'] ?? 0 ),
+		);
+
+		return $result;
 	}
 
 	/**

@@ -26,6 +26,16 @@ class AIAnalysisService {
 	private const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 	/**
+	 * Transient TTL for AI result cache (24 hours).
+	 */
+	private const RESULT_CACHE_TTL = DAY_IN_SECONDS;
+
+	/**
+	 * Cache group prefix for AI results.
+	 */
+	private const RESULT_CACHE_PREFIX = 'vmfa_ai_result_';
+
+	/**
 	 * Whether debug logging is enabled.
 	 *
 	 * @return bool
@@ -316,7 +326,25 @@ class AIAnalysisService {
 		// Get image data for vision-capable providers.
 		$image_data = $this->get_image_data( $attachment_id );
 
-		$result = $provider->analyze( $metadata, $folder_paths, $max_depth, $allow_new, $image_data, $suggested_folders );
+		// Check AI result cache (keyed by image content hash + provider + folder context).
+		$cache_key    = $this->build_result_cache_key( $provider, $image_data, $folder_paths, $allow_new );
+		$cached_result = null;
+		if ( null !== $cache_key && ! $is_reorganize_all ) {
+			$cached_result = get_transient( $cache_key );
+		}
+
+		if ( is_array( $cached_result ) ) {
+			$this->debug_log( 'AI result cache hit', array( 'attachment_id' => $attachment_id, 'cache_key' => $cache_key ) );
+			$result              = $cached_result;
+			$result['cache_hit'] = true;
+		} else {
+			$result = $provider->analyze( $metadata, $folder_paths, $max_depth, $allow_new, $image_data, $suggested_folders );
+
+			// Cache successful non-skip results.
+			if ( null !== $cache_key && 'skip' !== ( $result['action'] ?? 'skip' ) ) {
+				set_transient( $cache_key, $result, self::RESULT_CACHE_TTL );
+			}
+		}
 
 		// Enforce allow_new_folders at runtime (providers/LLMs may ignore prompt constraints).
 		if ( ! $allow_new && 'create' === ( $result[ 'action' ] ?? '' ) ) {
@@ -667,6 +695,39 @@ class AIAnalysisService {
 		}
 
 		return $this->get_image_data_from_url( (string) $image_url, (string) $mime_type );
+	}
+
+	/**
+	 * Build a cache key for an AI analysis result.
+	 *
+	 * The key incorporates the image content hash, provider name, model, and
+	 * a hash of the folder context so cached results are invalidated when the
+	 * folder tree changes.
+	 *
+	 * @param ProviderInterface    $provider     AI provider instance.
+	 * @param array<mixed>|null    $image_data   Image data (base64, mime_type) or null.
+	 * @param array<string, int>   $folder_paths Current folder paths.
+	 * @param bool                 $allow_new    Whether new folders are allowed.
+	 * @return string|null Cache key, or null when no image data is available.
+	 */
+	private function build_result_cache_key(
+		ProviderInterface $provider,
+		?array $image_data,
+		array $folder_paths,
+		bool $allow_new
+	): ?string {
+		// Only cache when we have image data to hash.
+		if ( null === $image_data || empty( $image_data['base64'] ) ) {
+			return null;
+		}
+
+		$image_hash   = hash( 'sha256', base64_decode( $image_data['base64'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$folder_hash  = md5( wp_json_encode( array_keys( $folder_paths ) ) );
+		$provider_key = $provider->get_name();
+
+		$allow_new_str = $allow_new ? '1' : '0';
+
+		return self::RESULT_CACHE_PREFIX . substr( hash( 'sha256', "{$provider_key}:{$image_hash}:{$folder_hash}:{$allow_new_str}" ), 0, 40 );
 	}
 
 	/**
