@@ -374,6 +374,12 @@ class MediaScannerService {
 				$batch_results   = array();
 				$pending_results = get_option( self::PENDING_RESULTS_OPTION, array() );
 				$dryrun_cache    = $dry_run ? get_option( self::DRYRUN_CACHE_OPTION, array() ) : array();
+				$batch_token_usage = array(
+					'prompt_tokens'     => 0,
+					'completion_tokens' => 0,
+					'total_tokens'      => 0,
+				);
+				$batch_cache_hits = 0;
 
 				foreach ( $batch_ids as $attachment_id ) {
 					// Check for cancellation between each item.
@@ -395,6 +401,18 @@ class MediaScannerService {
 
 					$result          = $this->analysis_service->analyze_media( (int) $attachment_id );
 					$batch_results[] = $result;
+
+					// Accumulate token usage from this result.
+					if ( ! empty( $result['token_usage'] ) && is_array( $result['token_usage'] ) ) {
+						$batch_token_usage['prompt_tokens']     += (int) ( $result['token_usage']['prompt_tokens'] ?? 0 );
+						$batch_token_usage['completion_tokens'] += (int) ( $result['token_usage']['completion_tokens'] ?? 0 );
+						$batch_token_usage['total_tokens']      += (int) ( $result['token_usage']['total_tokens'] ?? 0 );
+					}
+
+					// Track cache hits.
+					if ( ! empty( $result['cache_hit'] ) ) {
+						++$batch_cache_hits;
+					}
 
 					// Store pending result for later application.
 					if ( ! $dry_run && in_array( $result[ 'action' ], array( 'assign', 'create' ), true ) ) {
@@ -426,8 +444,14 @@ class MediaScannerService {
 
 				$this->update_progress(
 					array(
-						'processed' => $new_processed,
-						'results'   => $all_results,
+						'processed'   => $new_processed,
+						'results'     => $all_results,
+						'token_usage' => array(
+							'prompt_tokens'     => ( $progress['token_usage']['prompt_tokens'] ?? 0 ) + $batch_token_usage['prompt_tokens'],
+							'completion_tokens' => ( $progress['token_usage']['completion_tokens'] ?? 0 ) + $batch_token_usage['completion_tokens'],
+							'total_tokens'      => ( $progress['token_usage']['total_tokens'] ?? 0 ) + $batch_token_usage['total_tokens'],
+						),
+						'cache_hits'  => ( $progress['cache_hits'] ?? 0 ) + $batch_cache_hits,
 					)
 				);
 
@@ -645,6 +669,12 @@ class MediaScannerService {
 				'total'        => $total,
 				'processed'    => 0,
 				'results'      => array(),
+				'token_usage'  => array(
+					'prompt_tokens'     => 0,
+					'completion_tokens' => 0,
+					'total_tokens'      => 0,
+				),
+				'cache_hits'   => 0,
 				'started_at'   => time(),
 				'completed_at' => null,
 				'error'        => null,

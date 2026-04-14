@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-14
+
+### Changed
+
+- Compressed system prompt from ~1,200 to ~500 tokens (~60% reduction per API call)
+- Trimmed user prompt: removed redundant instructions, shorter format
+- Compact folder list format for libraries with 30+ folders (reduces per-call tokens)
+- Gemini provider now uses `systemInstruction` field instead of concatenating with user prompt
+- Session suggested folders capped at 30 most recent to prevent unbounded prompt growth
+
+### Added
+
+- AI result caching by image content hash — duplicate images skip API calls entirely
+- Token usage tracking: prompt_tokens, completion_tokens, total_tokens accumulated per scan
+- Cache hit counter in scan progress
+- Token usage extracted from OpenAI, Anthropic, Gemini, Grok, Ollama, Exo, and WordPress AI (Core) responses
+- WordPress AI provider now uses `generate_text_result()` to access the full `GenerativeAiResult` DTO
+
 ## [1.5.0] - 2026-03-14
 
 ### Changed

@@ -136,7 +136,17 @@ class OllamaProvider extends AbstractProvider {
 
 		$content = $response[ 'data' ][ 'message' ][ 'content' ] ?? '';
 
-		return $this->parse_response( $content, $folder_paths );
+		$result = $this->parse_response( $content, $folder_paths );
+
+		// Ollama returns eval_count / prompt_eval_count instead of standard usage.
+		$ollama_data = $response['data'] ?? array();
+		$result['token_usage'] = array(
+			'prompt_tokens'     => (int) ( $ollama_data['prompt_eval_count'] ?? 0 ),
+			'completion_tokens' => (int) ( $ollama_data['eval_count'] ?? 0 ),
+			'total_tokens'      => (int) ( $ollama_data['prompt_eval_count'] ?? 0 ) + (int) ( $ollama_data['eval_count'] ?? 0 ),
+		);
+
+		return $result;
 	}
 
 	/**
