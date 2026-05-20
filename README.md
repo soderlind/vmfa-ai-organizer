@@ -39,6 +39,10 @@ AI-powered media organization add-on for the [Virtual Media Folders](https://wor
 
 ## Installation
 
+Recommended: Use the [Add-On Manager](https://github.com/soderlind/vmfa) to install the add-on.
+
+Manual installation:
+
 1. Download [`vmfa-ai-organizer.zip`](https://github.com/soderlind/vmfa-ai-organizer/releases/latest/download/vmfa-ai-organizer.zip)
 2. Upload via  `Plugins → Add New → Upload Plugin`
 3. Activate via `WordPress Admin → Plugins`
