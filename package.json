@@ -37,6 +37,6 @@
 		"@wordpress/components": "^36.1.0",
 		"@wordpress/element": "^6.43.0",
 		"@wordpress/i18n": "^6.16.0",
-		"@wordpress/icons": "^12.1.0"
+		"@wordpress/icons": "^15.1.0"
 	}
 }
