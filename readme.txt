@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 7.0
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,9 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.6.2 =
+* Fixed: Action Scheduler now bundles into `vendor/woocommerce/action-scheduler/` instead of being relocated by `composer/installers`, restoring the release build and runtime loader.
 
 = 1.6.1 =
 * Security: Resolved the majority of Dependabot alerts by updating build/test dependencies (`@wordpress/scripts` 31 → 32, `@wordpress/components` → 36). Remaining alerts are dev-only transitive dependencies.
