@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-07-12
+
+### Security
+
+- Resolved the majority of Dependabot alerts by updating build/test dependencies (`npm audit fix`, `@wordpress/scripts` 31 → 32, `@wordpress/components` → 36). Remaining alerts are dev-only transitive dependencies pinned by `@wordpress/scripts`.
+
+### Changed
+
+- Added grouped `.github/dependabot.yml` config (npm/composer/github-actions) to consolidate future dependency update PRs.
+
 ## [1.6.0] - 2026-04-14
 
 ### Changed

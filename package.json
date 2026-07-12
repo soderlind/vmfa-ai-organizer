@@ -1,6 +1,6 @@
 {
 	"name": "vmfa-ai-organizer",
-	"version": "1.6.0",
+	"version": "1.6.1",
 	"description": "AI-powered media organization add-on for Virtual Media Folders",
 	"author": "Per Soderlind",
 	"license": "GPL-2.0-or-later",
@@ -28,13 +28,13 @@
 		"@testing-library/react": "^16.3.2",
 		"@vitejs/plugin-react": "^5.2.0",
 		"@wordpress/eslint-plugin": "^24.5.0",
-		"@wordpress/scripts": "^31.8.0",
+		"@wordpress/scripts": "^32.6.0",
 		"jsdom": "^29.0.2",
 		"vitest": "^4.1.4"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.43.0",
-		"@wordpress/components": "^32.5.0",
+		"@wordpress/components": "^36.1.0",
 		"@wordpress/element": "^6.43.0",
 		"@wordpress/i18n": "^6.16.0",
 		"@wordpress/icons": "^12.1.0"
