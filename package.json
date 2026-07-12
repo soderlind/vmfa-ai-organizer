@@ -33,7 +33,7 @@
 		"vitest": "^4.1.4"
 	},
 	"dependencies": {
-		"@wordpress/api-fetch": "^7.43.0",
+		"@wordpress/api-fetch": "^7.50.0",
 		"@wordpress/components": "^36.1.0",
 		"@wordpress/element": "^6.43.0",
 		"@wordpress/i18n": "^6.16.0",
