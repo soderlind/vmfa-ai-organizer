@@ -29,8 +29,8 @@
 		"@vitejs/plugin-react": "^5.2.0",
 		"@wordpress/eslint-plugin": "^24.5.0",
 		"@wordpress/scripts": "^32.6.0",
-		"jsdom": "^29.0.2",
-		"vitest": "^4.1.4"
+		"jsdom": "^29.1.1",
+		"vitest": "^4.1.10"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.43.0",
