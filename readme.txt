@@ -3,8 +3,8 @@ Contributors: starter
 Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordpresss-plugin-dependencies-feature/
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
-Tested up to: 7.0
-Stable tag: 1.6.2
+Tested up to: 7.1
+Stable tag: 1.6.3
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,10 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.6.3 =
+* Fixed: Prevent a fatal error when the "Virtual Media Folders" parent plugin is missing or older than 2.0.0; show an admin notice instead.
+* Changed: Tested up to WordPress 7.1.
 
 = 1.6.2 =
 * Fixed: Action Scheduler now bundles into `vendor/woocommerce/action-scheduler/` instead of being relocated by `composer/installers`, restoring the release build and runtime loader.
