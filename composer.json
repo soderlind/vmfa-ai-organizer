@@ -36,7 +36,7 @@
 		"brain/monkey": "^2.7",
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
 		"mockery/mockery": "^1.6",
-		"pestphp/pest": "^3.0",
+		"pestphp/pest": "^4.7",
 		"phpcompatibility/php-compatibility": "^9.0",
 		"wp-coding-standards/wpcs": "^3.0"
 	},
