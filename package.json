@@ -25,12 +25,12 @@
 	},
 	"devDependencies": {
 		"@testing-library/jest-dom": "^6.9.1",
-		"@testing-library/react": "^16.3.2",
+		"@testing-library/react": "^16.3.3",
 		"@vitejs/plugin-react": "^5.2.0",
 		"@wordpress/eslint-plugin": "^24.5.0",
 		"@wordpress/scripts": "^32.6.0",
 		"jsdom": "^29.0.2",
-		"vitest": "^4.1.4"
+		"vitest": "^4.1.11"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.43.0",
