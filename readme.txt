@@ -4,7 +4,7 @@ Donate link: https://developer.yoast.com/blog/real-world-implementation-of-wordp
 Tags: media, folders, ai, organization, virtual folders
 Requires at least: 6.8
 Tested up to: 7.1
-Stable tag: 1.6.3
+Stable tag: 1.7.0
 Requires PHP: 8.3
 Requires Plugins: virtual-media-folders
 License: GPLv2 or later
@@ -152,6 +152,12 @@ Use the "Reorganize All" scan mode. This removes all existing folder assignments
 
 
 == Changelog ==
+
+= 1.7.0 =
+* Changed: Styles use WordPress Design System tokens, so the UI follows WordPress 7 styling. On WordPress 6.8–6.9 with Virtual Media Folders 2.2.0+, the classic admin palette is used.
+* Changed: Built-in token fallbacks keep the add-on looking right with older Virtual Media Folders versions.
+* Changed: Accent colors follow the admin color scheme.
+* Removed: Separate WordPress 7 override stylesheet.
 
 = 1.6.3 =
 * Fixed: Prevent a fatal error when the "Virtual Media Folders" parent plugin is missing or older than 2.0.0; show an admin notice instead.

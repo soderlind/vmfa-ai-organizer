@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-10-26
+
+### Changed
+
+- Styles use WordPress Design System (`--wpds-*`) tokens, so the UI follows WordPress 7.0+ styling automatically. With Virtual Media Folders 2.2.0+ on WordPress 6.8–6.9, the classic admin palette is used.
+- The build adds WP 7 fallback values to every token (`postcss.config.js`), so the add-on still renders correctly with Virtual Media Folders < 2.2.0 on WordPress < 7.
+- Accent colors follow the admin color scheme on all supported WordPress versions.
+
+### Removed
+
+- Separate WordPress 7 override stylesheet (`build/wp7-compat.css`).
+
+### Developer
+
+- New `npm run lint:tokens` check.
+
 ## [1.6.3] - 2026-08-12
 
 ### Fixed
