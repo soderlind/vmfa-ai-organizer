@@ -4,6 +4,28 @@
  * @package VmfaAiOrganizer
  */
 
+// Colors use WordPress Design System tokens. VMF (2.2.0+) provides classic
+// WP 6.x values on older WordPress; the build adds WP 7 fallbacks for when
+// neither core nor VMF defines a token (postcss.config.js).
+$vmfa-primary: var(--wp-admin-theme-color, #2271b1);
+$vmfa-primary-tint: rgba(var(--wp-admin-theme-color--rgb, 34, 113, 177), 0.08);
+$vmfa-success: var(--wpds-color-foreground-content-success-weak);
+$vmfa-success-strong: var(--wpds-color-foreground-content-success);
+$vmfa-success-bg: var(--wpds-color-background-surface-success-weak);
+$vmfa-warning: var(--wpds-color-foreground-content-warning-weak);
+$vmfa-danger: var(--wpds-color-foreground-content-error-weak);
+$vmfa-danger-bg: var(--wpds-color-background-surface-error-weak);
+$vmfa-border: var(--wpds-color-stroke-surface-neutral);
+$vmfa-border-light: var(--wpds-color-stroke-surface-neutral-weak);
+$vmfa-bg-light: var(--wpds-color-background-surface-neutral-weak);
+$vmfa-bg-white: var(--wpds-color-background-surface-neutral-strong);
+$vmfa-bg-hover: var(--wpds-color-background-interactive-neutral-weak-active);
+$vmfa-track: var(--wpds-color-background-track-neutral);
+$vmfa-text: var(--wpds-color-foreground-content-neutral);
+$vmfa-text-muted: var(--wpds-color-foreground-content-neutral-weak);
+$vmfa-radius: var(--wpds-border-radius-md);
+$vmfa-radius-sm: var(--wpds-border-radius-sm);
+
 /* Tab navigation */
 .vmfa-nav-tabs {
 	margin-bottom: 20px;
@@ -44,9 +66,9 @@
 
 /* Card styles - matches VMF add-ons */
 .vmfa-card {
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
+	background: $vmfa-bg-white;
+	border: 1px solid $vmfa-border;
+	border-radius: $vmfa-radius;
 	margin-bottom: 20px;
 }
 
@@ -60,7 +82,7 @@
 
 .vmfa-stat-item {
 	padding: 0 16px;
-	border-right: 1px solid #f0f0f1;
+	border-right: 1px solid $vmfa-border-light;
 }
 
 .vmfa-stat-item:last-child {
@@ -71,12 +93,12 @@
 	font-size: 32px;
 	font-weight: 600;
 	line-height: 1.2;
-	color: #1d2327;
+	color: $vmfa-text;
 }
 
 .vmfa-stat-label {
 	font-size: 13px;
-	color: #646970;
+	color: $vmfa-text-muted;
 	margin-top: 4px;
 }
 
@@ -110,7 +132,7 @@
 		gap: 12px;
 		margin-top: 20px;
 		padding-top: 20px;
-		border-top: 1px solid #dcdcde;
+		border-top: 1px solid $vmfa-border;
 	}
 }
 
@@ -131,12 +153,12 @@
 	.vmfa-badge {
 		font-size: 11px;
 		padding: 2px 8px;
-		border-radius: 3px;
+		border-radius: $vmfa-radius-sm;
 		font-weight: 500;
 
 		&.vmfa-badge-info {
-			background: #e5f3ff;
-			color: #0073aa;
+			background: $vmfa-primary-tint;
+			color: $vmfa-primary;
 		}
 	}
 
@@ -148,7 +170,7 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 8px 0;
-		border-bottom: 1px solid #f0f0f1;
+		border-bottom: 1px solid $vmfa-border-light;
 
 		&:last-child {
 			border-bottom: none;
@@ -156,32 +178,32 @@
 	}
 
 	.vmfa-progress-label {
-		color: #757575;
+		color: $vmfa-text-muted;
 	}
 
 	.vmfa-progress-value {
 		font-weight: 500;
 
 		&.vmfa-success {
-			color: #00a32a;
+			color: $vmfa-success;
 		}
 
 		&.vmfa-error {
-			color: #d63638;
+			color: $vmfa-danger;
 		}
 	}
 
 	.vmfa-progress-bar {
 		height: 100%;
-		background: #2271b1;
-		border-radius: 4px;
+		background: $vmfa-primary;
+		border-radius: $vmfa-radius;
 		transition: width 0.3s ease;
 	}
 
 	.vmfa-progress-bar-container {
 		height: 8px;
-		background: #e0e0e0;
-		border-radius: 4px;
+		background: $vmfa-track;
+		border-radius: $vmfa-radius;
 		margin: 16px 0;
 		overflow: hidden;
 
@@ -196,17 +218,17 @@
 
 	.vmfa-progress-hint {
 		font-size: 12px;
-		color: #757575;
+		color: $vmfa-text-muted;
 		font-style: italic;
 		margin-top: -8px;
 		margin-bottom: 16px;
 	}
 
 	.vmfa-progress-error {
-		color: #d63638;
-		background: #fcf0f1;
+		color: $vmfa-danger;
+		background: $vmfa-danger-bg;
 		padding: 12px;
-		border-radius: 4px;
+		border-radius: $vmfa-radius;
 		margin-top: 12px;
 	}
 
@@ -219,7 +241,7 @@
 	.vmfa-recent-results {
 		margin-top: 20px;
 		padding-top: 20px;
-		border-top: 1px solid #e0e0e0;
+		border-top: 1px solid $vmfa-border;
 
 		h4 {
 			margin: 0 0 12px 0;
@@ -247,49 +269,49 @@
 		font-size: 13px;
 
 		&:hover {
-			background: #f0f0f0;
+			background: $vmfa-bg-hover;
 		}
 
 		&:focus {
-			outline: 2px solid #007cba;
+			outline: 2px solid $vmfa-primary;
 			outline-offset: -2px;
 		}
 	}
 
 	.vmfa-result-item {
-		background: #f9f9f9;
-		border-radius: 4px;
+		background: $vmfa-bg-light;
+		border-radius: $vmfa-radius;
 		margin-bottom: 4px;
 		font-size: 13px;
-		border: 1px solid #e0e0e0;
+		border: 1px solid $vmfa-border;
 
 		&.vmfa-result-skip {
 			opacity: 0.7;
 
 			.vmfa-result-header {
-				background: #f5f5f5;
+				background: $vmfa-bg-light;
 			}
 		}
 
 		&.vmfa-result-create {
 
 			.vmfa-result-header {
-				background: #f0f7f0;
+				background: $vmfa-success-bg;
 			}
 		}
 
 		&.vmfa-result-assign {
 
 			.vmfa-result-header {
-				background: #f0f5ff;
+				background: $vmfa-primary-tint;
 			}
 		}
 
 		&.is-expanded {
-			border-color: #007cba;
+			border-color: $vmfa-primary;
 
 			.vmfa-result-header {
-				border-bottom: 1px solid #e0e0e0;
+				border-bottom: 1px solid $vmfa-border;
 			}
 		}
 	}
@@ -309,7 +331,7 @@
 	}
 
 	.vmfa-result-folder {
-		color: #1e4620;
+		color: $vmfa-success-strong;
 		font-size: 12px;
 		white-space: nowrap;
 		overflow: hidden;
@@ -320,21 +342,21 @@
 	.vmfa-result-confidence {
 		font-size: 11px;
 		padding: 2px 6px;
-		background: #e5f3ff;
-		border-radius: 3px;
+		background: $vmfa-primary-tint;
+		border-radius: $vmfa-radius-sm;
 		flex-shrink: 0;
 	}
 
 	.vmfa-result-toggle {
 		font-size: 10px;
-		color: #757575;
+		color: $vmfa-text-muted;
 		flex-shrink: 0;
 	}
 
 	.vmfa-result-details {
 		padding: 12px 16px;
-		background: #fff;
-		border-radius: 0 0 4px 4px;
+		background: $vmfa-bg-white;
+		border-radius: 0 0 $vmfa-radius $vmfa-radius;
 
 		dl {
 			display: grid;
@@ -345,7 +367,7 @@
 
 		dt {
 			font-weight: 500;
-			color: #757575;
+			color: $vmfa-text-muted;
 			font-size: 12px;
 		}
 
@@ -382,8 +404,8 @@
 		justify-content: flex-start;
 		gap: 12px;
 		padding: 16px 20px;
-		border-top: 1px solid #e0e0e0;
-		background: #f9f9f9;
+		border-top: 1px solid $vmfa-border;
+		background: $vmfa-bg-light;
 		flex-shrink: 0;
 	}
 
@@ -404,20 +426,20 @@
 	.vmfa-preview-stat {
 		text-align: center;
 		padding: 16px;
-		background: #f0f0f1;
-		border-radius: 4px;
+		background: $vmfa-bg-light;
+		border-radius: $vmfa-radius;
 
 		.vmfa-stat-value {
 			display: block;
 			font-size: 28px;
 			font-weight: 600;
-			color: #1e1e1e;
+			color: $vmfa-text;
 		}
 
 		.vmfa-stat-label {
 			display: block;
 			font-size: 12px;
-			color: #757575;
+			color: $vmfa-text-muted;
 			margin-top: 4px;
 		}
 	}
@@ -425,7 +447,7 @@
 	.vmfa-preview-section {
 		margin-top: 24px;
 		padding-top: 24px;
-		border-top: 1px solid #e0e0e0;
+		border-top: 1px solid $vmfa-border;
 
 		h4 {
 			margin: 0 0 12px 0;
@@ -443,8 +465,8 @@
 		align-items: center;
 		gap: 8px;
 		padding: 8px 12px;
-		background: #f9f9f9;
-		border-radius: 4px;
+		background: $vmfa-bg-light;
+		border-radius: $vmfa-radius;
 		margin-bottom: 4px;
 	}
 
@@ -460,29 +482,29 @@
 		td {
 			padding: 8px 12px;
 			text-align: left;
-			border-bottom: 1px solid #e0e0e0;
+			border-bottom: 1px solid $vmfa-border;
 		}
 
 		th {
-			background: #f0f0f1;
+			background: $vmfa-bg-light;
 			font-weight: 600;
 		}
 	}
 
 	.vmfa-confidence-high {
-		color: #00a32a;
+		color: $vmfa-success;
 	}
 
 	.vmfa-confidence-medium {
-		color: #dba617;
+		color: $vmfa-warning;
 	}
 
 	.vmfa-confidence-low {
-		color: #d63638;
+		color: $vmfa-danger;
 	}
 
 	.vmfa-preview-more {
-		color: #757575;
+		color: $vmfa-text-muted;
 		font-style: italic;
 		margin-top: 8px;
 	}
@@ -490,7 +512,7 @@
 	.vmfa-preview-skipped {
 
 		.description {
-			color: #757575;
+			color: $vmfa-text-muted;
 			margin-bottom: 12px;
 		}
 	}
@@ -501,7 +523,7 @@
 
 		li {
 			margin-bottom: 4px;
-			color: #757575;
+			color: $vmfa-text-muted;
 		}
 	}
 
@@ -515,9 +537,9 @@
 	}
 
 	.vmfa-backup-details {
-		background: #f9f9f9;
+		background: $vmfa-bg-light;
 		padding: 12px;
-		border-radius: 4px;
+		border-radius: $vmfa-radius;
 	}
 
 	.vmfa-backup-row {
@@ -527,7 +549,7 @@
 	}
 
 	.vmfa-backup-label {
-		color: #757575;
+		color: $vmfa-text-muted;
 	}
 
 	.vmfa-backup-value {
@@ -535,15 +557,15 @@
 	}
 
 	.vmfa-restore-confirm {
-		background: #fcf0f1;
+		background: $vmfa-danger-bg;
 		padding: 16px;
-		border-radius: 4px;
+		border-radius: $vmfa-radius;
 		margin-top: 16px;
 	}
 
 	.vmfa-restore-warning {
 		margin: 0 0 12px 0;
-		color: #d63638;
+		color: $vmfa-danger;
 	}
 
 	.vmfa-restore-actions {
@@ -557,10 +579,10 @@
 	display: inline-block;
 	margin-left: 8px;
 	padding: 2px 8px;
-	background: #f0f0f1;
-	border-radius: 3px;
+	background: $vmfa-bg-light;
+	border-radius: $vmfa-radius-sm;
 	font-size: 11px;
-	color: #757575;
+	color: $vmfa-text-muted;
 }
 
 /* Provider-specific field visibility */

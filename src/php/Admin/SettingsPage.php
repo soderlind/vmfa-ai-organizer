@@ -324,10 +324,15 @@ class SettingsPage {
 			true
 		);
 
+		$style_deps = array( 'wp-components' );
+		if ( wp_style_is( 'vmfo-tokens', 'registered' ) ) {
+			$style_deps[] = 'vmfo-tokens';
+		}
+
 		wp_enqueue_style(
 			'vmfa-ai-organizer-admin',
 			VMFA_AI_ORGANIZER_URL . 'build/index.css',
-			array( 'wp-components' ),
+			$style_deps,
 			$asset['version']
 		);
 

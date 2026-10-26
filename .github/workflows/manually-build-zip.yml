@@ -41,7 +41,7 @@ jobs:
             /src/js/* !/src/php/*
             composer.json composer.lock package.json package-lock.json
             phpunit.xml phpunit.xml.dist phpcs.xml vitest.config.js i18n-map.json
-            .editorconfig .eslintignore .phpunit.result.cache .eslintrc.js .gitignore .gitattributes webpack.config.js
+            .editorconfig .eslintignore .phpunit.result.cache .eslintrc.js .gitignore .gitattributes webpack.config.js postcss.config.js .stylelintrc.tokens.mjs
             *.log CHANGELOG.md README.md
             !readme.txt !build/* !languages/* !src/php/* !vendor/*
 
