@@ -18,10 +18,6 @@ AI-powered media organization add-on for the [Virtual Media Folders](https://wor
 - **Background Processing**: Uses Action Scheduler for efficient chunked processing
 - **Real-time Progress**: Live progress updates in the admin UI
 
-
-
-<a href="https://www.youtube.com/watch?v=FMmvNUGd8Pg"><img src="assets/vmfa-order-in-chaos.png" alt="Virtual Media Folders AI Organizer - Order in Chaos" style="max-width:100%;height:auto;"/></a>
-
 <p align="center"><em>Watch: <a href="https://www.youtube.com/watch?v=FMmvNUGd8Pg">See how Virtual Media Folders AI Organizer brings order to your media library chaos.</a></em></p>
 
 
